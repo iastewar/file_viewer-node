@@ -7,6 +7,6 @@ $(function(){
   // });
 
   socket.on('file received', function(msg){
-    $('#file').html(msg);
+    $('#file').text(msg);
   });
 });

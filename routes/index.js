@@ -2,6 +2,10 @@ var express = require('express');
 var router = express.Router();
 var fs = require('fs');
 var io = require('../io');
+var multer = require('multer');
+
+var upload = multer()
+
 
 
 /* GET home page. */
@@ -12,27 +16,43 @@ router.get('/', function(req, res, next) {
   });
 });
 
-router.post('/', function(req, res) {
-  //console.log(req);
+router.post('/', upload.single(), function(req, res) {
 
-  var file = "";
-  var bodyKeys = Object.keys(req.body);
-  for (var i = 0; i < bodyKeys.length; i++) {
-    file = file + bodyKeys[i] + req.body[bodyKeys[i]];
+  // get directory of file to be saved
+  var dirFileArray = req.body.fileName.split("/");
+  var directory = "tmp";
+  for (var i = 0; i < dirFileArray.length - 1; i++) {
+    directory = directory + '/' + dirFileArray[i];
   }
 
-  fs.writeFile("tmp/test.txt", file, function(err) {
-      if(err) {
+  // try to create the directory
+  fs.mkdir(directory, function(err) {
+    // if file should be deleted, delete it
+    if (req.body.deleted) {
+      fs.unlink("tmp/" + req.body.fileName, function(err) {
+        if (err) {
           return console.log(err);
-      }
+        }
+      })
+    // otherwise, svae the file and send it to all listening sockets
+    } else {
+      fs.writeFile("tmp/" + req.body.fileName, req.body.fileContents, function(err) {
+          if(err) {
+              return console.log(err);
+          }
 
-      console.log("The file was saved!");
+          console.log("The file was saved!");
+      });
+
+      io.emit('file received', req.body.fileContents);
+    }
+
+    res.writeHead(200);
+    res.end();
   });
 
-  io.emit('file received', file);
 
-  res.writeHead(200);
-  res.end();
+
 
 })
 
