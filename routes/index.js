@@ -84,9 +84,6 @@ var sendDirectoryToSingleClient = function(socket, currentDir, callback) {
       }
     }
   });
-
-  // socket.leave(room);
-  // console.log("socket left room " + room)
 }
 
 io.on('connection', function(socket) {
@@ -97,7 +94,11 @@ io.on('connection', function(socket) {
         console.log("socket joined room " + msg)
       }
     });
+  });
 
+  socket.on('disconnect folder', function(msg) {
+    socket.leave(msg);
+    console.log("socket left room " + msg)
   })
 
   socket.on('request room', function(msg) {
@@ -123,7 +124,13 @@ io.on('connection', function(socket) {
           }
         });
         // delete file from all listening sockets
-        deleteFileFromClient(directory, msg.fileName, room);
+        var fileNameToSend = ""
+        for (var i = 1; i < dirFileArray.length - 1; i++) {
+          fileNameToSend = fileNameToSend + dirFileArray[i] + '/';
+        }
+        fileNameToSend += dirFileArray[dirFileArray.length - 1];
+        deleteFileFromClient(room, fileNameToSend, room);
+
       // otherwise, save the file and send it to all listening sockets
       } else {
         fs.writeFile("tmp/" + msg.fileName, msg.fileContents, function(err) {
@@ -135,7 +142,12 @@ io.on('connection', function(socket) {
         });
 
         // send file to all listening sockets
-        sendFileToClient(directory, msg.fileName, msg.fileContents, room);
+        var fileNameToSend = ""
+        for (var i = 1; i < dirFileArray.length - 1; i++) {
+          fileNameToSend = fileNameToSend + dirFileArray[i] + '/';
+        }
+        fileNameToSend += dirFileArray[dirFileArray.length - 1];
+        sendFileToClient(room, fileNameToSend, msg.fileContents, room);
       }
     });
   });
