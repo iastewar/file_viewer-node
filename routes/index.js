@@ -25,46 +25,68 @@ var deleteFileFromClient = function(directoryName, fileName, room) {
   io.to(room).emit('send file', {fileName: currentDir + '/' + fileName, deleted: true});
 }
 
-var sendDirectory = function(directoryName, subDirectories, room) {
+var depth = 0;
+var sendDirectory = function(directoryName, subDirectories, room, callback) {
+  depth++;
   fs.readdir(directoryName + '/' + subDirectories, function(err, fileNames) {
     if (err) {
       io.to(room).emit('folder does not exist');
-      return true;
-    }
-    // fileName could be a file or a directory
-    fileNames.forEach(function(fileName){
-      fs.readFile(directoryName + '/' + subDirectories + '/' + fileName, 'utf-8', function(err, data) {
-        var subDirs;
-        if (subDirectories === "") {
-          subDirs = fileName;
-        } else {
-          subDirs = subDirectories + '/' + fileName;
-        }
-        // if error must be a directory
-        if (err) {
-          sendDirectory(directoryName, subDirs, room);
-        } else {
-          // send to client
-          sendFileToClient(directoryName, subDirs, data, room);
-        }
+      if (callback) {
+        callback(true);
+      }
+    } else {
+      var index = 0;
+      // fileName could be a file or a directory
+      fileNames.forEach(function(fileName){
+        fs.readFile(directoryName + '/' + subDirectories + '/' + fileName, 'utf-8', function(err, data) {
+          var subDirs;
+          if (subDirectories === "") {
+            subDirs = fileName;
+          } else {
+            subDirs = subDirectories + '/' + fileName;
+          }
+          // if error must be a directory
+          if (err) {
+            sendDirectory(directoryName, subDirs, room, callback);
+          } else {
+            // send to client
+            sendFileToClient(directoryName, subDirs, data, room);
+          }
+          index++;
+          if (index === fileNames.length) {
+            depth--;
+            if (depth === 0 && callback) {
+              callback(false);
+            }
+          }
+        });
       });
-    });
+    }
   });
 }
 
 var sendDirectoryToSingleClient = function(socket, currentDir, callback) {
+  // join a solo room
   var room = 'individual room';
   socket.join(room);
   console.log("socket joined room " + room)
   var directoryName = "tmp/" + currentDir;
   // send directory to client
-  var err = sendDirectory(directoryName, "", room);
+  sendDirectory(directoryName, "", room, function(err) {
+    socket.leave(room);
+    console.log("socket left room " + room)
 
-  socket.leave(room);
-  console.log("socket left room " + room)
-  if (callback) {
-    callback(err);
-  }
+    if (callback) {
+      if (err) {
+        callback(true);
+      } else {
+        callback(false);
+      }
+    }
+  });
+
+  // socket.leave(room);
+  // console.log("socket left room " + room)
 }
 
 io.on('connection', function(socket) {
@@ -72,8 +94,10 @@ io.on('connection', function(socket) {
     sendDirectoryToSingleClient(socket, msg, function(err) {
       if (!err) {
         socket.join(msg);
+        console.log("socket joined room " + msg)
       }
-    })
+    });
+
   })
 
   socket.on('request room', function(msg) {
