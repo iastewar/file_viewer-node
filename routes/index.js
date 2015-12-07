@@ -13,7 +13,7 @@ var io = require('../io');
 // and data is the content of the file
 var sendFileToClient = function(directoryName, fileName, data, room) {
   var dirArray = directoryName.split("/");
-  var currentDir = dirArray[dirArray.length-1]
+  var currentDir = dirArray[dirArray.length-1];
   io.to(room).emit('send file', {fileName: currentDir + '/' + fileName, fileContents: data});
   console.log(room + ", " + currentDir + '/' + fileName);
 }
@@ -21,7 +21,7 @@ var sendFileToClient = function(directoryName, fileName, data, room) {
 // deletes a file from the clients in a room where directoryName/fileName is the path of the file
 var deleteFileFromClient = function(directoryName, fileName, room) {
   var dirArray = directoryName.split("/");
-  var currentDir = dirArray[dirArray.length - 1]
+  var currentDir = dirArray[dirArray.length - 1];
   io.to(room).emit('send file', {fileName: currentDir + '/' + fileName, deleted: true});
 }
 
@@ -38,7 +38,7 @@ var sendDirectory = function(directoryName, subDirectories, room, callback) {
       var index = 0;
       // fileName could be a file or a directory
       fileNames.forEach(function(fileName){
-        fs.readFile(directoryName + '/' + subDirectories + '/' + fileName, 'utf-8', function(err, data) {
+        fs.readFile(directoryName + '/' + subDirectories + '/' + fileName, function(err, data) {
           var subDirs;
           if (subDirectories === "") {
             subDirs = fileName;
@@ -69,12 +69,12 @@ var sendDirectoryToSingleClient = function(socket, currentDir, callback) {
   // join a solo room
   var room = 'individual room';
   socket.join(room);
-  console.log("socket joined room " + room)
+  console.log("socket joined room " + room);
   var directoryName = "tmp/" + currentDir;
   // send directory to client
   sendDirectory(directoryName, "", room, function(err) {
     socket.leave(room);
-    console.log("socket left room " + room)
+    console.log("socket left room " + room);
 
     if (callback) {
       if (err) {
@@ -91,19 +91,15 @@ io.on('connection', function(socket) {
     sendDirectoryToSingleClient(socket, msg, function(err) {
       if (!err) {
         socket.join(msg);
-        console.log("socket joined room " + msg)
+        console.log("socket joined room " + msg);
       }
     });
   });
 
   socket.on('disconnect folder', function(msg) {
     socket.leave(msg);
-    console.log("socket left room " + msg)
-  })
-
-  socket.on('request room', function(msg) {
-    //socket.join(msg);
-  })
+    console.log("socket left room " + msg);
+  });
 
   socket.on('send file', function(msg) {
     // get directory of file to be saved
