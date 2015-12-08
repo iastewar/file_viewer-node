@@ -7,6 +7,8 @@ var onConnection = function(socket) {
       if (!err) {
         socket.join(msg);
         console.log("socket joined room " + msg);
+      } else {
+        console.log("problem sending directory to client")
       }
     });
   });
