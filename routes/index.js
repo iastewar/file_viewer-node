@@ -2,12 +2,6 @@ var express = require('express');
 var router = express.Router();
 var fs = require('fs');
 var io = require('../io');
-//var multer = require('multer');
-
-//var upload = multer()
-
-
-
 
 // removes a directory asynchronously
 var rmdirAsync = function(path, callback) {
@@ -72,7 +66,8 @@ var sendDirectory = function(directoryName, subDirectories, room, callback) {
   depth++;
   fs.readdir(directoryName + '/' + subDirectories, function(err, fileNames) {
     if (err) {
-      io.to(room).emit('folder does not exist');
+      // either the directory doesn't exist or we can't open this many files at once
+      io.to(room).emit('send directory error');
       if (callback) {
         callback(true);
       }
