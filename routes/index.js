@@ -9,6 +9,48 @@ var io = require('../io');
 
 
 
+// removes a directory asynchronously
+var rmdirAsync = function(path, callback) {
+	fs.readdir(path, function(err, files) {
+		if(err) {
+			// Pass the error on to callback
+			callback(err, []);
+			return;
+		}
+		var wait = files.length,
+			count = 0,
+			folderDone = function(err) {
+			count++;
+			// If we cleaned out all the files, continue
+			if( count >= wait || err) {
+				fs.rmdir(path,callback);
+			}
+		};
+		// Empty directory to bail early
+		if(!wait) {
+			folderDone();
+			return;
+		}
+
+		// Remove one or more trailing slash to keep from doubling up
+		path = path.replace(/\/+$/,"");
+		files.forEach(function(file) {
+			var curPath = path + "/" + file;
+			fs.lstat(curPath, function(err, stats) {
+				if( err ) {
+					callback(err, []);
+					return;
+				}
+				if( stats.isDirectory() ) {
+					rmdirAsync(curPath, folderDone);
+				} else {
+					fs.unlink(curPath, folderDone);
+				}
+			});
+		});
+	});
+};
+
 // sends a file to the clients in a room where directoryName/fileName is the path of the file,
 // and data is the content of the file
 var sendFileToClient = function(directoryName, fileName, data, room) {
@@ -38,29 +80,48 @@ var sendDirectory = function(directoryName, subDirectories, room, callback) {
       var index = 0;
       // fileName could be a file or a directory
       fileNames.forEach(function(fileName){
-        fs.readFile(directoryName + '/' + subDirectories + '/' + fileName, function(err, data) {
+        fs.stat(directoryName + '/' + subDirectories + '/' + fileName, function(err, stats) {
           var subDirs;
           if (subDirectories === "") {
             subDirs = fileName;
           } else {
             subDirs = subDirectories + '/' + fileName;
           }
-          // if error must be a directory
-          if (err) {
-            sendDirectory(directoryName, subDirs, room, callback);
-          } else {
-            // send to client
-            sendFileToClient(directoryName, subDirs, data, room);
-          }
-          index++;
-          if (index === fileNames.length) {
-            depth--;
-            if (depth === 0 && callback) {
-              callback(false);
+          if (stats.isFile() && stats.size > 16777216) {
+            console.log("Error, " + fileName + " is over 16MB and can't be sent");
+            index++;
+            if (index === fileNames.length) {
+              depth--;
+              if (depth === 0 && callback) {
+                callback(true);
+              }
             }
+          } else if (stats.isDirectory()) {
+            sendDirectory(directoryName, subDirs, room, callback);
+            index++;
+            if (index === fileNames.length) {
+              depth--;
+              if (depth === 0 && callback) {
+                callback(false);
+              }
+            }
+          } else {
+            fs.readFile(directoryName + '/' + subDirectories + '/' + fileName, function(err, data) {
+              // send to client
+              sendFileToClient(directoryName, subDirs, data, room);
+              index++;
+              if (index === fileNames.length) {
+                depth--;
+                if (depth === 0 && callback) {
+                  callback(false);
+                }
+              }
+            });
           }
+
         });
       });
+
     }
   });
 }
@@ -114,9 +175,18 @@ io.on('connection', function(socket) {
     fs.mkdir(directory, function(err) {
       // if file should be deleted, delete it
       if (msg.deleted) {
-        fs.unlink("tmp/" + msg.fileName, function(err) {
-          if (err) {
-            return console.log(err);
+        fs.stat("tmp/" + msg.fileName, function(err, stats) {
+          if (!stats) {
+            return;
+          }
+          if (stats.isFile()) {
+            fs.unlink("tmp/" + msg.fileName, function(err) {
+              if (err) {
+                return console.log(err);
+              }
+            });
+          } else {
+            rmdirAsync("tmp/" + msg.fileName);
           }
         });
         // delete file from all listening sockets
