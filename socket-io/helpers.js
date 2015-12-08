@@ -36,7 +36,7 @@ helpers.rmdirAsync = function(path, callback) {
 					return;
 				}
 				if( stats.isDirectory() ) {
-					rmdirAsync(curPath, folderDone);
+					helpers.rmdirAsync(curPath, folderDone);
 				} else {
 					fs.unlink(curPath, folderDone);
 				}
@@ -92,7 +92,7 @@ helpers.sendDirectory = function(directoryName, subDirectories, room, callback) 
               }
             }
           } else if (stats.isDirectory()) {
-            sendDirectory(directoryName, subDirs, room, callback);
+            helpers.sendDirectory(directoryName, subDirs, room, callback);
             index++;
             if (index === fileNames.length) {
               depth--;
@@ -103,7 +103,7 @@ helpers.sendDirectory = function(directoryName, subDirectories, room, callback) 
           } else {
             fs.readFile(directoryName + '/' + subDirectories + '/' + fileName, function(err, data) {
               // send to client
-              sendFileToClient(directoryName, subDirs, data, room);
+              helpers.sendFileToClient(directoryName, subDirs, data, room);
               index++;
               if (index === fileNames.length) {
                 depth--;
@@ -128,7 +128,7 @@ helpers.sendDirectoryToSingleClient = function(socket, currentDir, callback) {
   console.log("socket joined room " + room);
   var directoryName = "tmp/" + currentDir;
   // send directory to client
-  sendDirectory(directoryName, "", room, function(err) {
+  helpers.sendDirectory(directoryName, "", room, function(err) {
     socket.leave(room);
     console.log("socket left room " + room);
 
