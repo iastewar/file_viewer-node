@@ -7,6 +7,9 @@ var bodyParser = require('body-parser');
 var passport = require('passport');
 var flash = require('connect-flash');
 var session = require('express-session');
+var MongoStore = require('connect-mongo')(session);
+var passportSocketIo = require("passport.socketio");
+var io = require('./io');
 
 // dbs
 var db = require('./model/db');
@@ -32,7 +35,10 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use(session({ secret: 'ilovescotchscotchyscotchscotch' })); // session secret
+app.use(session({
+    secret: 'iamasecret',
+    store: new MongoStore({ mongooseConnection: db.connection })
+}));
 app.use(passport.initialize());
 app.use(passport.session()); // persistent login sessions
 app.use(flash()); // use connect-flash for flash messages stored in session
@@ -73,5 +79,25 @@ app.use(function(err, req, res, next) {
   });
 });
 
+io.use(passportSocketIo.authorize({
+  cookieParser: cookieParser,        // the same middleware you registrer in express
+//  key:          'express.sid',       // the name of the cookie where express/connect stores its session_id
+  secret:       'iamasecret',        // the session_secret to parse the cookie
+  store:        MongoStore,        // we NEED to use a sessionstore. no memorystore please
+  success:      onAuthorizeSuccess,  // *optional* callback on success - read more below
+  fail:         onAuthorizeFail,     // *optional* callback on fail/error - read more below
+}));
+
+function onAuthorizeSuccess(data, accept){
+  console.log('successful connection to socket.io');
+  accept();
+}
+
+function onAuthorizeFail(data, message, error, accept){
+  if(error)
+    accept(new Error(message));
+  // this error will be sent to the user as a special error-package
+  // see: http://socket.io/docs/client-api/#socket > error-object
+}
 
 module.exports = app;

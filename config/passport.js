@@ -32,15 +32,17 @@ var pass = function(passport) {
         } else {
           mongoose.model('User').create({
             email: email,
-            password: ""
+            firstname: req.body.firstname,
+            lastname: req.body.lastname,
+            password: password
           }, function(err, user) {
             if (err) {
-              throw err;
+              return done(null, false, req.flash('signupMessage', 'A field is blank.'));
             } else {
               user.password = user.generateHash(password);
               user.save(function(err) {
                    if (err)
-                       throw err;
+                       console.log(err);
                    return done(null, user);
                });
             }
