@@ -3,47 +3,59 @@ var io = require('../io');
 
 var helpers = {};
 
-// removes a directory asynchronously
-helpers.rmdirAsync = function(path, callback) {
-	fs.readdir(path, function(err, files) {
-		if(err) {
-			// Pass the error on to callback
-			callback(err, []);
-			return;
-		}
-		var wait = files.length,
-			count = 0,
-			folderDone = function(err) {
-			count++;
-			// If we cleaned out all the files, continue
-			if( count >= wait || err) {
-				fs.rmdir(path,callback);
-			}
-		};
-		// Empty directory to bail early
-		if(!wait) {
-			folderDone();
-			return;
-		}
+helpers.rmdirRec = function(directoryName, subDirectories, callback) {
+	fs.readdir(directoryName + '/' + subDirectories, function(err, fileNames) {
 
-		// Remove one or more trailing slash to keep from doubling up
-		path = path.replace(/\/+$/,"");
-		files.forEach(function(file) {
-			var curPath = path + "/" + file;
-			fs.lstat(curPath, function(err, stats) {
-				if( err ) {
-					callback(err, []);
-					return;
-				}
-				if( stats.isDirectory() ) {
-					helpers.rmdirAsync(curPath, folderDone);
+		var index = 0;
+		fileNames.forEach(function(fileName) {
+			fs.stat(directoryName + '/' + subDirectories + '/' + fileName, function(err, stats) {
+				if (err || !stats) {
+					console.log("trying to remove: " + directoryName + '/' + subDirectories + '/' + fileName);
+					fs.rmdir(directoryName + '/' + subDirectories + '/' + fileName, function(err) {
+						console.log(err);
+					});
 				} else {
-					fs.unlink(curPath, folderDone);
+					var subDirs;
+					if (subDirectories === "") {
+						subDirs = fileName;
+					} else {
+						subDirs = subDirectories + '/' + fileName;
+					}
+
+					if (stats.isDirectory()) {
+						helpers.rmdirRec(directoryName, subDirs, function() {
+							index++;
+							if (index === fileNames.length) {
+								fs.rmdir(directoryName + '/' + subDirectories, function(err) {
+									if (err)
+										console.log(err);
+									if (callback)
+										callback();
+								});
+							}
+						});
+					} else {
+						fs.unlink(directoryName + '/' + subDirectories + '/' + fileName, function(err) {
+							if (err) {
+								console.log(err);
+							}
+							index++;
+	            if (index === fileNames.length) {
+	              fs.rmdir(directoryName + '/' + subDirectories, function(err) {
+									if (err)
+										console.log(err);
+									if (callback)
+										callback();
+								});
+	            }
+						});
+					}
 				}
+
 			});
 		});
 	});
-};
+}
 
 // sends a file to the clients in a room where directoryName/fileName is the path of the file,
 // and data is the content of the file
@@ -61,9 +73,7 @@ helpers.deleteFileFromClient = function(directoryName, fileName, room) {
   io.to(room).emit('send file', {fileName: currentDir + '/' + fileName, deleted: true});
 }
 
-var depth = 0;
 helpers.sendDirectory = function(directoryName, subDirectories, room, callback) {
-  depth++;
   fs.readdir(directoryName + '/' + subDirectories, function(err, fileNames) {
     if (err) {
       // either the directory doesn't exist or we can't open this many files at once
@@ -86,28 +96,27 @@ helpers.sendDirectory = function(directoryName, subDirectories, room, callback) 
             console.log("Error, " + fileName + " is over 16MB and can't be sent");
             index++;
             if (index === fileNames.length) {
-              depth--;
-              if (depth === 0 && callback) {
+              if (callback) {
                 callback(true);
               }
             }
           } else if (stats.isDirectory()) {
-            helpers.sendDirectory(directoryName, subDirs, room, callback);
-            index++;
-            if (index === fileNames.length) {
-              depth--;
-              if (depth === 0 && callback) {
-                callback(false);
-              }
-            }
+            helpers.sendDirectory(directoryName, subDirs, room, function() {
+							index++;
+	            if (index === fileNames.length) {
+	              if (callback) {
+	                callback(false);
+	              }
+	            }
+						});
+
           } else {
             fs.readFile(directoryName + '/' + subDirectories + '/' + fileName, function(err, data) {
               // send to client
               helpers.sendFileToClient(directoryName, subDirs, data, room);
               index++;
               if (index === fileNames.length) {
-                depth--;
-                if (depth === 0 && callback) {
+                if (callback) {
                   callback(false);
                 }
               }
@@ -123,14 +132,14 @@ helpers.sendDirectory = function(directoryName, subDirectories, room, callback) 
 
 helpers.sendDirectoryToSingleClient = function(socket, currentDir, callback) {
   // join a solo room
-  var room = 'individual room';
-  socket.join(room);
-  console.log("socket joined room " + room);
+  //var room = 'individual room';
+  //socket.join(room);
+  //console.log("socket joined room " + room);
   var directoryName = "tmp/" + currentDir;
   // send directory to client
-  helpers.sendDirectory(directoryName, "", room, function(err) {
-    socket.leave(room);
-    console.log("socket left room " + room);
+  helpers.sendDirectory(directoryName, "", socket.id, function(err) {
+    //socket.leave(room);
+    //console.log("socket left room " + room);
 
     if (callback) {
       if (err) {
@@ -140,6 +149,15 @@ helpers.sendDirectoryToSingleClient = function(socket, currentDir, callback) {
       }
     }
   });
+}
+
+helpers.isAuthenticated = function(socket) {
+	if (!socket.request.user.logged_in) {
+		io.to(socket.id).emit('log in');
+		return false;
+	} else {
+		return true;
+	}
 }
 
 module.exports = helpers;

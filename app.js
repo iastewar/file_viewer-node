@@ -91,12 +91,14 @@ io.use(passportSocketIo.authorize({
 }));
 
 function onAuthorizeSuccess(data, accept){
-  console.log('successful connection to socket.io');
+  //console.log('successful connection to socket.io');
+  console.log('successsful connection to socket.io: user is logged in')
   accept();
 }
 
 function onAuthorizeFail(data, message, error, accept){
-  console.log('failed connection to socket.io:', message);
+  //console.log('failed connection to socket.io:', message);
+  console.log('successsful connection to socket.io: user is not logged in');
   accept();
   //if(error)
     //accept(new Error(message));

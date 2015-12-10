@@ -14,7 +14,14 @@ var express = require('express'),
 
 router.get('/login', function(req, res) {
   res.status("unauthenticated");
-  res.render('users/login.ejs', { message: req.flash('loginMessage'), user: req.user});
+  res.format({
+    html: function() {
+      res.render('users/login.ejs', { message: req.flash('loginMessage'), user: req.user});
+    },
+    json: function() {
+      res.json({user: req.user});
+    }
+  });
 });
 
 router.get('/signup', function(req, res) {

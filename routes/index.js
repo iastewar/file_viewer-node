@@ -16,7 +16,15 @@ router.get('/', function(req, res, next) {
     //res.send(req.cookies);
     //res.end();
 
-    res.render('index', { user: req.user });
+    res.format({
+      html: function() {
+        res.render('index', { user: req.user });
+      },
+      json: function() {
+        res.json({user: req.user});
+      }
+    });
+
 });
 
 module.exports = router;
