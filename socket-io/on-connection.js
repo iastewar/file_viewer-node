@@ -2,6 +2,12 @@ var fs = require('fs');
 var helpers = require('./helpers');
 
 var onConnection = function(socket) {
+  socket.on('delete folder', function() {
+    if (socket.request.user.logged_in) {
+      helpers.rmdirRec("tmp/" + socket.request.user._id, "");
+    }
+  })
+
   socket.on('disconnect', function() {
     if (socket.request.user.logged_in) {
       helpers.rmdirRec("tmp/" + socket.request.user._id, "");
