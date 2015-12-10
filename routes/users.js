@@ -1,11 +1,11 @@
-var express = require('express'),
-    router = express.Router(),
-    mongoose = require('mongoose'), //mongo connection
-    bodyParser = require('body-parser'), //parses information from POST
-    methodOverride = require('method-override'), //used to manipulate POST
-    passport = require('passport'),
-    flash = require('connect-flash'),
-    session = require('express-session');
+var express = require('express');
+var router = express.Router();
+var mongoose = require('mongoose'); //mongo connection
+var bodyParser = require('body-parser') ;//parses information from POST
+var methodOverride = require('method-override'); //used to manipulate POST
+var passport = require('passport');
+var flash = require('connect-flash');
+var session = require('express-session');
 
 /* GET users listing. */
 // router.get('/', function(req, res, next) {
@@ -43,6 +43,10 @@ router.post('/login', passport.authenticate('local-login', {
 router.get('/logout', function(req, res) {
   req.logout();
   res.redirect('/');
+});
+
+router.get('/:id/:dir', function(req, res) {
+  res.render('users/show_dir.ejs', {user: req.user, dirUser: req.params.id, dir: req.params.dir});
 });
 
 // route middleware to make sure user is logged in

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <% include ../_head %>
+    <script type='text/javascript'>
+      var directoryName = "<%= dirUser + "/" + dir %>"
+    </script>
+    <script src='/javascripts/show-dir.js'></script>
+  </head>
+  <body>
+    <div class="container">
+      <% include ../_navbar %>
+      <h1><%= dir %></h1>
+
+      <div id="file" style="white-space: pre-wrap;"><%#= data %></div>
+
+    </div>
+  </body>
+</html>
