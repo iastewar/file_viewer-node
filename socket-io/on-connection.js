@@ -4,13 +4,13 @@ var helpers = require('./helpers');
 var onConnection = function(socket) {
   socket.on('delete folder', function() {
     if (socket.request.user.logged_in) {
-      helpers.rmdirRec("tmp/" + socket.request.user._id, "");
+      helpers.rmdirRec("tmp/" + socket.request.user.username, "");
     }
   })
 
   socket.on('disconnect', function() {
     if (socket.request.user.logged_in) {
-      helpers.rmdirRec("tmp/" + socket.request.user._id, "");
+      helpers.rmdirRec("tmp/" + socket.request.user.username, "");
     }
   });
 
@@ -36,8 +36,8 @@ var onConnection = function(socket) {
     }
     // get directory of file to be saved
     var dirFileArray = msg.fileName.split("/");
-    var room = socket.request.user._id + "/" + dirFileArray[0];
-    var directory = "tmp" + "/" + socket.request.user._id;
+    var room = socket.request.user.username + "/" + dirFileArray[0];
+    var directory = "tmp" + "/" + socket.request.user.username;
     // create the user directory
     fs.mkdir(directory, function(err) {
       for (var i = 0; i < dirFileArray.length - 1; i++) {
@@ -48,18 +48,15 @@ var onConnection = function(socket) {
       fs.mkdir(directory, function(err) {
         // if file should be deleted, delete it
         if (msg.deleted) {
-          fs.stat("tmp/" + socket.request.user._id + "/" + msg.fileName, function(err, stats) {
+          fs.stat("tmp/" + socket.request.user.username + "/" + msg.fileName, function(err, stats) {
             if (!stats) {
               return;
             }
             if (stats.isFile()) {
-              fs.unlink("tmp/" + socket.request.user._id + "/" + msg.fileName, function(err) {
-                if (err) {
-                  return console.log(err);
-                }
+              fs.unlink("tmp/" + socket.request.user.username + "/" + msg.fileName, function(err) {
               });
             } else {
-              helpers.rmdirRec("tmp/" + socket.request.user._id + "/" + msg.fileName, "");
+              helpers.rmdirRec("tmp/" + socket.request.user.username + "/" + msg.fileName, "");
             }
           });
           // delete file from all listening sockets
@@ -72,11 +69,7 @@ var onConnection = function(socket) {
 
         // otherwise, save the file and send it to all listening sockets
         } else {
-          fs.writeFile("tmp/" + socket.request.user._id + "/" + msg.fileName, msg.fileContents, function(err) {
-              if(err) {
-                  return console.log(err);
-              }
-
+          fs.writeFile("tmp/" + socket.request.user.username + "/" + msg.fileName, msg.fileContents, function(err) {
               console.log("The file was saved!");
           });
 

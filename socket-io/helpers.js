@@ -13,9 +13,7 @@ helpers.rmdirRec = function(directoryName, subDirectories, callback) {
 			fileNames.forEach(function(fileName) {
 				fs.stat(directoryName + '/' + subDirectories + '/' + fileName, function(err, stats) {
 					if (err || !stats) {
-						console.log("trying to remove: " + directoryName + '/' + subDirectories + '/' + fileName);
 						fs.rmdir(directoryName + '/' + subDirectories + '/' + fileName, function(err) {
-							console.log(err);
 						});
 					} else {
 						var subDirs;
@@ -30,8 +28,6 @@ helpers.rmdirRec = function(directoryName, subDirectories, callback) {
 								index++;
 								if (index === fileNames.length) {
 									fs.rmdir(directoryName + '/' + subDirectories, function(err) {
-										if (err)
-											console.log(err);
 										if (callback)
 											callback();
 									});
@@ -39,14 +35,9 @@ helpers.rmdirRec = function(directoryName, subDirectories, callback) {
 							});
 						} else {
 							fs.unlink(directoryName + '/' + subDirectories + '/' + fileName, function(err) {
-								if (err) {
-									console.log(err);
-								}
 								index++;
 		            if (index === fileNames.length) {
 		              fs.rmdir(directoryName + '/' + subDirectories, function(err) {
-										if (err)
-											console.log(err);
 										if (callback)
 											callback();
 									});

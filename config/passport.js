@@ -14,26 +14,24 @@ var pass = function(passport) {
   });
 
   passport.use('local-signup', new LocalStrategy({
-    usernameField: 'email',
+    usernameField: 'username',
     passwordField: 'password',
     passReqToCallback: true
-  }, function(req, email, password, done) {
+  }, function(req, username, password, done) {
 
     // User.find won't fire unless data is sent back
     process.nextTick(function() {
 
 
-      mongoose.model('User').findOne({ 'email': email }, function(err, user) {
+      mongoose.model('User').findOne({ 'username': username }, function(err, user) {
         if (err)
           return done(err);
 
         if (user) {
-          return done(null, false, req.flash('signupMessage', 'That email is already taken.'));
+          return done(null, false, req.flash('signupMessage', 'That username is already taken.'));
         } else {
           mongoose.model('User').create({
-            email: email,
-            firstname: req.body.firstname,
-            lastname: req.body.lastname,
+            username: username,
             password: password
           }, function(err, user) {
             if (err) {
@@ -53,15 +51,15 @@ var pass = function(passport) {
   }));
 
   passport.use('local-login', new LocalStrategy({
-    usernameField: 'email',
+    usernameField: 'username',
     passwordField: 'password',
     passReqToCallback: true
-  }, function(req, email, password, done) {
-    mongoose.model('User').findOne({ 'email': email }, function(err, user) {
+  }, function(req, username, password, done) {
+    mongoose.model('User').findOne({ 'username': username }, function(err, user) {
       if (err)
         return done(err);
       if (!user)
-        return done(null, false, req.flash('loginMessage', 'Invalid Email!'));
+        return done(null, false, req.flash('loginMessage', 'Invalid Username!'));
       if (!user.validPassword(password))
         return done(null, false, req.flash('loginMessage', 'Invalid password!'));
 
