@@ -10,6 +10,12 @@ io.on('connection', onConnection);
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
+    //console.log(req.cookies);
+
+    //res.writeHead(200);
+    //res.send(req.cookies);
+    //res.end();
+
     res.render('index', { user: req.user });
 });
 

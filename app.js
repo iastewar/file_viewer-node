@@ -35,9 +35,11 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+var sessionStore = new MongoStore({ mongooseConnection: db.connection });
 app.use(session({
-    secret: 'iamasecret',
-    store: new MongoStore({ mongooseConnection: db.connection })
+    key: 'file.view-sid-key',
+    secret: 'iamasecretsecretforfileview',
+    store: sessionStore
 }));
 app.use(passport.initialize());
 app.use(passport.session()); // persistent login sessions
@@ -81,9 +83,9 @@ app.use(function(err, req, res, next) {
 
 io.use(passportSocketIo.authorize({
   cookieParser: cookieParser,        // the same middleware you registrer in express
-//  key:          'express.sid',       // the name of the cookie where express/connect stores its session_id
-  secret:       'iamasecret',        // the session_secret to parse the cookie
-  store:        MongoStore,        // we NEED to use a sessionstore. no memorystore please
+  key:          'file.view-sid-key',        // the name of the cookie where express/connect stores its session_id
+  secret:       'iamasecretsecretforfileview',         // the session_secret to parse the cookie
+  store:        sessionStore,           // we NEED to use a sessionstore. no memorystore please
   success:      onAuthorizeSuccess,  // *optional* callback on success - read more below
   fail:         onAuthorizeFail,     // *optional* callback on fail/error - read more below
 }));
@@ -94,8 +96,10 @@ function onAuthorizeSuccess(data, accept){
 }
 
 function onAuthorizeFail(data, message, error, accept){
-  if(error)
-    accept(new Error(message));
+  console.log('failed connection to socket.io:', message);
+  accept();
+  //if(error)
+    //accept(new Error(message));
   // this error will be sent to the user as a special error-package
   // see: http://socket.io/docs/client-api/#socket > error-object
 }

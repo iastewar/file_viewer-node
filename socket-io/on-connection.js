@@ -3,6 +3,11 @@ var helpers = require('./helpers');
 
 var onConnection = function(socket) {
   socket.on('connect folder', function(msg) {
+    console.log(socket.request.user);
+    if (!socket.request.user.logged_in) {
+      console.log("not logged in!");
+      return;
+    }
     helpers.sendDirectoryToSingleClient(socket, msg, function(err) {
       if (!err) {
         socket.join(msg);
