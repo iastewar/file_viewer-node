@@ -8,11 +8,11 @@ var onConnection = function(socket) {
     }
   })
 
-  socket.on('disconnect', function() {
-    if (socket.request.user.logged_in) {
-      helpers.rmdirRec("tmp/" + socket.request.user.username, "");
-    }
-  });
+  // socket.on('disconnect', function() {
+  //   if (socket.request.user.logged_in) {
+  //     helpers.rmdirRec("tmp/" + socket.request.user.username, "");
+  //   }
+  // });
 
   socket.on('connect folder', function(msg) {
     helpers.sendDirectoryToSingleClient(socket, msg, function(err) {

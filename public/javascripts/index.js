@@ -1,12 +1,21 @@
-// $(function(){
-//   var socket = io();
-//   // $('form').submit(function(){
-//   //  socket.emit('chat message', $('#m').val());
-//   //  $('#m').val('');
-//   //  event.preventDefault();
-//   // });
-//
-//   socket.on('file received', function(msg){
-//     $('#file').text(msg);
-//   });
-// });
+var Cont = React.createClass({
+        getInitialState: function() {
+          return {value: ""};
+        },
+        calcResult: function() {
+          var num1 = parseInt(this.refs.num1.value);
+          var num2 = parseInt(this.refs.num2.value);
+
+          this.setState({value: num1 + num2})
+
+        },
+        render: function() {
+          return <div><input type="text" ref="num1" />
+                + <input type="text" ref="num2"/>
+                  <button onClick={this.calcResult}>=</button>
+                  <span>{this.state.value}</span>
+                </div>
+        }
+      })
+
+ReactDOM.render(<Cont />, document.getElementById('container'));

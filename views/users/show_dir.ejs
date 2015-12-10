@@ -2,15 +2,21 @@
 <html>
   <head>
     <% include ../_head %>
-    <script type='text/javascript'>
-      var directoryName = "<%= dirUser + "/" + dir %>"
-    </script>
-    <script src='/javascripts/show-dir.js'></script>
+    <script src="/javascripts/react.js"></script>
+    <script src="/javascripts/react-dom.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.24/browser.min.js"></script>
   </head>
   <body>
     <div class="container">
       <% include ../_navbar %>
       <h1><%= dir %></h1>
+
+      <div id="container"></div>
+
+      <script type='text/javascript'>
+        var directoryName = "<%= dirUser + "/" + dir %>"
+      </script>
+      <script type='text/babel' src='/javascripts/show-dir.js'></script>
 
       <div id="file" style="white-space: pre-wrap;"><%#= data %></div>
 
