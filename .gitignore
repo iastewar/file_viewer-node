@@ -1,2 +1,5 @@
+.git/**
 tmp/**
 node_modules/**
+public/javascripts/react-dom.js
+public/javascripts/react.js

@@ -9,16 +9,17 @@
   <body>
     <div class="container">
       <% include ../_navbar %>
-      <h1><%= dir %></h1>
+      <h1 class="page-header"><%= dir %></h1>
 
       <div id="container"></div>
+
+      <div id="file" style="white-space: pre-wrap;"><%#= data %></div>
 
       <script type='text/javascript'>
         var directoryName = "<%= dirUser + "/" + dir %>"
       </script>
       <script type='text/babel' src='/javascripts/show-dir.js'></script>
 
-      <div id="file" style="white-space: pre-wrap;"><%#= data %></div>
 
     </div>
   </body>
