@@ -8,21 +8,21 @@ var onConnection = function(socket) {
     }
   })
 
-  socket.on('disconnect', function() {
-    if (socket.request.user.logged_in) {
-      if (socket.directories) {
-        for (var dir in socket.directories) {
-          if (socket.directories.hasOwnProperty(dir)) {
-            helpers.rmdirRec("tmp/" + socket.request.user.username + "/" + dir, "", function() {
-              fs.rmdir("tmp/" + socket.request.user.username, function(err) {
-
-              });
-            });
-          }
-        }
-      }
-    }
-  });
+  // socket.on('disconnect', function() {
+  //   if (socket.request.user.logged_in) {
+  //     if (socket.directories) {
+  //       for (var dir in socket.directories) {
+  //         if (socket.directories.hasOwnProperty(dir)) {
+  //           helpers.rmdirRec("tmp/" + socket.request.user.username + "/" + dir, "", function() {
+  //             fs.rmdir("tmp/" + socket.request.user.username, function(err) {
+  //
+  //             });
+  //           });
+  //         }
+  //       }
+  //     }
+  //   }
+  // });
 
   socket.on('connect folder', function(msg) {
     helpers.sendDirectoryToSingleClient(socket, msg, function(err) {

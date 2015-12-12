@@ -2,9 +2,17 @@
 <html>
   <head>
     <% include ../_head %>
+
+    <link rel="stylesheet" href="/stylesheets/show_dir.css">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.0.0/styles/default.min.css">
+
+
     <script src="/javascripts/react.js"></script>
     <script src="/javascripts/react-dom.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.24/browser.min.js"></script>
+
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.0.0/highlight.min.js"></script>
+
   </head>
   <body>
     <div class="container">
@@ -19,6 +27,9 @@
         var directoryName = "<%= dirUser + "/" + dir %>"
       </script>
       <script type='text/babel' src='/javascripts/show-dir.js'></script>
+
+      <script>hljs.initHighlightingOnLoad();</script>
+
 
 
     </div>
