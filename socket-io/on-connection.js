@@ -8,11 +8,21 @@ var onConnection = function(socket) {
     }
   })
 
-  // socket.on('disconnect', function() {
-  //   if (socket.request.user.logged_in) {
-  //     helpers.rmdirRec("tmp/" + socket.request.user.username, "");
-  //   }
-  // });
+  socket.on('disconnect', function() {
+    if (socket.request.user.logged_in) {
+      if (socket.directories) {
+        for (var dir in socket.directories) {
+          if (socket.directories.hasOwnProperty(dir)) {
+            helpers.rmdirRec("tmp/" + socket.request.user.username + "/" + dir, "", function() {
+              fs.rmdir("tmp/" + socket.request.user.username, function(err) {
+
+              });
+            });
+          }
+        }
+      }
+    }
+  });
 
   socket.on('connect folder', function(msg) {
     helpers.sendDirectoryToSingleClient(socket, msg, function(err) {
@@ -34,8 +44,16 @@ var onConnection = function(socket) {
     if (!helpers.isAuthenticated(socket)) {
       return;
     }
+
     // get directory of file to be saved
     var dirFileArray = msg.fileName.split("/");
+
+    // remember the directory this socket created so it can be deleted on disconnect
+    if (!socket.directories) {
+      socket.directories = {};
+    }
+    socket.directories[dirFileArray[0]] = null;
+
     var room = socket.request.user.username + "/" + dirFileArray[0];
     var directory = "tmp" + "/" + socket.request.user.username;
     // create the user directory

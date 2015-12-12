@@ -157,39 +157,6 @@ $(function(){
 
       addToFileTree(fileTree, fileNameArray, fileNameArray.length, 0, ab2str(msg.fileContents));
 
-
-
-      // for (var i = 0; i < fileNameArray.length - 1; i++) {
-      //   // if (!fileNode) {
-      //   //   console.log(i + " " + msg.fileName + ": " + fileNameArray[i] + ", " + fileNode)
-      //   //   console.log(fileTree);
-      //   // }
-      //   fileNode.name = fileNameArray[i];
-      //   if (!fileNode.childNodes) {
-      //     fileNode.childNodes = [{name: fileNameArray[i+1]}];
-      //     fileNode = fileNode.childNodes[0];
-      //     continue;
-      //   }
-      //
-      //   var childIndex;
-      //   for (var j = 0; j < fileNode.childNodes.length; j++) {
-      //     if (fileNode.childNodes[j].name === fileNameArray[i+1]) {
-      //       childIndex = j;
-      //       break;
-      //     }
-      //   }
-      //   if (childIndex) {
-      //     //console.log(fileNode.childNodes);
-      //     //console.log(msg.fileName + ", " + fileNameArray[i] + " " + fileNode.childNodes.length + " " + childIndex);
-      //     fileNode = fileNode.childNodes[childIndex];
-      //     //if (!fileNode) console.log("here");
-      //   } else {
-      //     var len = fileNode.childNodes.length;
-      //     fileNode.childNodes[len] = {name: fileNameArray[i+1]};
-      //     fileNode = fileNode.childNodes[len];
-      //   }
-      // }
-
       //console.log(fileTree);
 
       ReactDOM.render(<FileView node={fileTree} />, document.getElementById('container'));
