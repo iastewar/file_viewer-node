@@ -1,3 +1,6 @@
+var socket = io();
+
+
 var TreeNode = React.createClass({
   getInitialState: function() {
     return {visible: false, open: false};
@@ -110,31 +113,14 @@ var FileView = React.createClass({
   }
 })
 
-//ReactDOM.render(<FileView files={{}} />, document.getElementById('container'));
-
-//var files = {};
-
-// var fileTree = {name: "howdy",
-//   childNodes: [
-//     {name: "bobby"},
-//     {name: "suzie", childNodes: [
-//       {name: "puppy", childNodes: [
-//         {name: "dog house"}
-//       ]},
-//       {name: "cherry tree"}
-//     ]}
-//   ]};
-//
-// ReactDOM.render(<TreeNode node={fileTree} />, document.getElementById('container'));
-
 var fileTree = {};
 
 var addToFileTree = function(fileTree, fileNameArray, length, index, fileContents) {
+  fileTree.name = fileNameArray[index];
   if (index === length - 1) {
     fileTree.fileContents = fileContents;
     return;
   }
-  fileTree.name = fileNameArray[index];
   if (!fileTree.childNodes) {
     fileTree.childNodes = [{name: fileNameArray[index + 1]}];
     addToFileTree(fileTree.childNodes[0], fileNameArray, length, index + 1, fileContents);
@@ -152,55 +138,42 @@ var addToFileTree = function(fileTree, fileNameArray, length, index, fileContent
       addToFileTree(fileTree.childNodes[fileTree.childNodes.length - 1], fileNameArray, length, index + 1, fileContents);
     }
   }
-
 }
 
-
-$(function(){
-  var socket = io();
-
-  function ab2str(buf) {
-    return String.fromCharCode.apply(null, new Uint8Array(buf));
+var removeFromFileTree = function(fileTree, fileNameArray, length, index) {
+  if (fileTree.name !== fileNameArray[index]) {
+    return false;
   }
+  var flag = false;
+  var childrenLength = fileTree.childNodes.length;
+  for (var i = 0; i < childrenLength; i++) {
+    if (fileNameArray[index + 1] === fileTree.childNodes[i].name) {
+      if (index === length - 2) {
+        fileTree.childNodes.splice(i, 1);
+        return true;
+      }
+      removeFromFileTree(fileTree.childNodes[i], fileNameArray, length, index + 1);
+      flag = true;
+    }
+  }
+  if (!flag) {
+    return false;
+  }
+}
 
-  socket.emit('connect folder', directoryName);
+var ab2str = function(buf) {
+  return String.fromCharCode.apply(null, new Uint8Array(buf));
+}
 
+socket.emit('connect folder', directoryName);
 
-  socket.on('send file', function(msg){
-    if (msg.deleted) {
-      //delete files[msg.fileName];
-    } else {
-      //files[msg.fileName] = ab2str(msg.fileContents);
+socket.on('send file', function(msg){
+  var fileNameArray = msg.fileName.split("/");
 
-      //console.log(msg.fileName);
-
-      var fileNameArray = msg.fileName.split("/");
-
-      addToFileTree(fileTree, fileNameArray, fileNameArray.length, 0, ab2str(msg.fileContents));
-
-      //console.log(fileTree);
-
-      ReactDOM.render(<FileView node={fileTree} />, document.getElementById('container'));
-
-
-     }
-    //ReactDOM.render(<TreeNode node={fileTree} />, document.getElementById('container'));
-    //$('#file').append("<div><h2>" + msg.fileName + "</h2>" + ab2str(msg.fileContents) + "</div>");
-  });
-
-
-
-  // socket.on('send file', function(msg){
-  //   if (msg.deleted) {
-  //     delete files[msg.fileName];
-  //   } else {
-  //     files[msg.fileName] = ab2str(msg.fileContents);
-  //   }
-  //   ReactDOM.render(<FileView files={files} />, document.getElementById('container'));
-  //   //$('#file').append("<div><h2>" + msg.fileName + "</h2>" + ab2str(msg.fileContents) + "</div>");
-  // });
-
-  socket.on('send directory error', function() {
-    $('#file').text("Folder does not exist");
-  })
+  if (msg.deleted) {
+    removeFromFileTree(fileTree, fileNameArray, fileNameArray.length, 0);
+  } else {
+    addToFileTree(fileTree, fileNameArray, fileNameArray.length, 0, ab2str(msg.fileContents));
+    ReactDOM.render(<FileView node={fileTree} />, document.getElementById('container'));
+   }
 });
