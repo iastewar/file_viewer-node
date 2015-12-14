@@ -2,27 +2,33 @@ var fs = require('fs');
 var helpers = require('./helpers');
 
 var onConnection = function(socket) {
-  socket.on('delete folder', function() {
+  socket.on('delete folder', function(msg) {
     if (socket.request.user.logged_in) {
-      helpers.rmdirRec("tmp/" + socket.request.user.username, "");
+      if (socket.directories && socket.directories[msg]) {
+        helpers.rmdirRec("tmp/" + socket.request.user.username + "/" + msg, "", function() {
+          fs.rmdir("tmp/" + socket.request.user.username, function(err) {
+
+          });
+        });
+      }
     }
   })
 
-  // socket.on('disconnect', function() {
-  //   if (socket.request.user.logged_in) {
-  //     if (socket.directories) {
-  //       for (var dir in socket.directories) {
-  //         if (socket.directories.hasOwnProperty(dir)) {
-  //           helpers.rmdirRec("tmp/" + socket.request.user.username + "/" + dir, "", function() {
-  //             fs.rmdir("tmp/" + socket.request.user.username, function(err) {
-  //
-  //             });
-  //           });
-  //         }
-  //       }
-  //     }
-  //   }
-  // });
+  socket.on('disconnect', function() {
+    if (socket.request.user.logged_in) {
+      if (socket.directories) {
+        for (var dir in socket.directories) {
+          if (socket.directories.hasOwnProperty(dir)) {
+            helpers.rmdirRec("tmp/" + socket.request.user.username + "/" + dir, "", function() {
+              fs.rmdir("tmp/" + socket.request.user.username, function(err) {
+  
+              });
+            });
+          }
+        }
+      }
+    }
+  });
 
   socket.on('connect folder', function(msg) {
     helpers.sendDirectoryToSingleClient(socket, msg, function(err) {
@@ -30,7 +36,7 @@ var onConnection = function(socket) {
         socket.join(msg);
         console.log("socket joined room " + msg);
       } else {
-        console.log("problem sending directory to client")
+        console.log("problem sending directory to client");
       }
     });
   });
@@ -52,7 +58,7 @@ var onConnection = function(socket) {
     if (!socket.directories) {
       socket.directories = {};
     }
-    socket.directories[dirFileArray[0]] = null;
+    socket.directories[dirFileArray[0]] = true;
 
     var room = socket.request.user.username + "/" + dirFileArray[0];
     var directory = "tmp" + "/" + socket.request.user.username;
@@ -83,7 +89,7 @@ var onConnection = function(socket) {
             fileNameToSend = fileNameToSend + dirFileArray[i] + '/';
           }
           fileNameToSend += dirFileArray[dirFileArray.length - 1];
-          helpers.deleteFileFromClient(room, fileNameToSend, room);
+          helpers.deleteFileFromClient("tmp/" + room, fileNameToSend, room);
 
         // otherwise, save the file and send it to all listening sockets
         } else {
@@ -97,7 +103,7 @@ var onConnection = function(socket) {
             fileNameToSend = fileNameToSend + dirFileArray[i] + '/';
           }
           fileNameToSend += dirFileArray[dirFileArray.length - 1];
-          helpers.sendFileToClient(room, fileNameToSend, msg.fileContents, room);
+          helpers.sendFileToClient("tmp/" + room, fileNameToSend, msg.fileContents, room);
         }
       });
     })

@@ -35,7 +35,7 @@ var TreeNode = React.createClass({
 
     var node;
     if (this.props.node.childNodes) {
-      node = <div className={caretClass}> <div onClick={this.toggle} style={{cursor: "pointer"}} className={folderClass}> {this.props.node.name}</div></div>;
+      node = <div onClick={this.toggle} className={caretClass} style={{cursor: "pointer"}}> <div className={folderClass}> {this.props.node.name}</div></div>;
     } else {
       node = <div onClick={this.toggle} style={{cursor: "pointer"}} className="fa fa-file-text-o"> {this.props.node.name}</div>;
     }
