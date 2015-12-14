@@ -25,7 +25,14 @@ router.get('/login', function(req, res) {
 });
 
 router.get('/signup', function(req, res) {
-  res.render('users/signup.ejs', { message: req.flash('signupMessage'), user: req.user});
+  res.format({
+    html: function() {
+      res.render('users/signup.ejs', { message: req.flash('signupMessage'), user: req.user});
+    },
+    json: function() {
+      res.json({user: req.user});
+    }
+  });
 });
 
 router.post('/signup', passport.authenticate('local-signup', {
