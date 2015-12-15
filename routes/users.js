@@ -6,11 +6,24 @@ var methodOverride = require('method-override'); //used to manipulate POST
 var passport = require('passport');
 var flash = require('connect-flash');
 var session = require('express-session');
+var io = require('../io');
+var onConnection = require('../socket-io/on-connection');
 
-/* GET users listing. */
-// router.get('/', function(req, res, next) {
-//   res.send('respond with a resource');
-// });
+
+io.on('connection', onConnection);
+
+/* GET home page. */
+router.get('/', function(req, res, next) {
+    res.format({
+      html: function() {
+        res.render('users/index.ejs', { user: req.user });
+      },
+      json: function() {
+        res.json({user: req.user});
+      }
+    });
+
+});
 
 router.get('/login', function(req, res) {
   res.status("unauthenticated");

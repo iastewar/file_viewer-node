@@ -16,7 +16,6 @@ var db = require('./model/db');
 var user = require('./model/users');
 
 // route paths
-var home = require('./routes/index');
 var users = require('./routes/users');
 
 var app = express();
@@ -47,8 +46,7 @@ app.use(flash()); // use connect-flash for flash messages stored in session
 
 
 // route urls
-app.use('/', home);
-app.use('/users', users);
+app.use('/', users);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -91,19 +89,13 @@ io.use(passportSocketIo.authorize({
 }));
 
 function onAuthorizeSuccess(data, accept){
-  //console.log('successful connection to socket.io');
   console.log('successsful connection to socket.io: user is logged in')
   accept();
 }
 
 function onAuthorizeFail(data, message, error, accept){
-  //console.log('failed connection to socket.io:', message);
   console.log('successsful connection to socket.io: user is not logged in');
   accept();
-  //if(error)
-    //accept(new Error(message));
-  // this error will be sent to the user as a special error-package
-  // see: http://socket.io/docs/client-api/#socket > error-object
 }
 
 module.exports = app;
