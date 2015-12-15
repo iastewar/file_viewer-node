@@ -165,6 +165,11 @@ var ab2str = function(buf) {
   return String.fromCharCode.apply(null, new Uint8Array(buf));
 }
 
+var sendDirectoryError = function(msg) {
+  $("#container").html("Problem retrieving directory " + msg + ". Either repository does not exist, or the server is experiencing problems").addClass("alert alert-danger");
+  $("h1").html("Not Found!");
+}
+
 socket.emit('connect folder', directoryName);
 
 socket.on('send file', function(msg){
@@ -177,3 +182,5 @@ socket.on('send file', function(msg){
     ReactDOM.render(<FileView node={fileTree} />, document.getElementById('container'));
    }
 });
+
+socket.on('send directory error', sendDirectoryError);

@@ -16,7 +16,7 @@ io.on('connection', onConnection);
 router.get('/', function(req, res, next) {
     res.format({
       html: function() {
-        res.render('users/index.ejs', { user: req.user });
+        res.render('index', { user: req.user });
       },
       json: function() {
         res.json({user: req.user});
@@ -50,13 +50,13 @@ router.get('/signup', function(req, res) {
 
 router.post('/signup', passport.authenticate('local-signup', {
   successRedirect: '/',
-  failureRedirect: '/users/signup',
+  failureRedirect: '/signup',
   failureFlash: true
 }));
 
 router.post('/login', passport.authenticate('local-login', {
   successRedirect: '/',
-  failureRedirect: '/users/login',
+  failureRedirect: '/login',
   failureFlash: true
 }));
 
