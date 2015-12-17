@@ -21,7 +21,7 @@ var onConnection = function(socket) {
           if (socket.directories.hasOwnProperty(dir)) {
             helpers.rmdirRec("tmp/" + socket.request.user.username + "/" + dir, "", function() {
               fs.rmdir("tmp/" + socket.request.user.username, function(err) {
-  
+
               });
             });
           }
@@ -62,51 +62,58 @@ var onConnection = function(socket) {
 
     var room = socket.request.user.username + "/" + dirFileArray[0];
     var directory = "tmp" + "/" + socket.request.user.username;
-    // create the user directory
-    fs.mkdir(directory, function(err) {
-      for (var i = 0; i < dirFileArray.length - 1; i++) {
-        directory = directory + '/' + dirFileArray[i];
-      }
 
-      // try to create the directory
+    for (var i = 0; i < dirFileArray.length - 1; i++) {
       fs.mkdir(directory, function(err) {
-        // if file should be deleted, delete it
-        if (msg.deleted) {
-          fs.stat("tmp/" + socket.request.user.username + "/" + msg.fileName, function(err, stats) {
-            if (!stats) {
-              return;
-            }
-            if (stats.isFile()) {
-              fs.unlink("tmp/" + socket.request.user.username + "/" + msg.fileName, function(err) {
-              });
-            } else {
-              helpers.rmdirRec("tmp/" + socket.request.user.username + "/" + msg.fileName, "");
-            }
-          });
-          // delete file from all listening sockets
-          var fileNameToSend = ""
-          for (var i = 1; i < dirFileArray.length - 1; i++) {
-            fileNameToSend = fileNameToSend + dirFileArray[i] + '/';
-          }
-          fileNameToSend += dirFileArray[dirFileArray.length - 1];
-          helpers.deleteFileFromClient("tmp/" + room, fileNameToSend, room);
 
-        // otherwise, save the file and send it to all listening sockets
-        } else {
-          fs.writeFile("tmp/" + socket.request.user.username + "/" + msg.fileName, msg.fileContents, function(err) {
-              console.log("The file was saved!");
-          });
-
-          // send file to all listening sockets
-          var fileNameToSend = ""
-          for (var i = 1; i < dirFileArray.length - 1; i++) {
-            fileNameToSend = fileNameToSend + dirFileArray[i] + '/';
-          }
-          fileNameToSend += dirFileArray[dirFileArray.length - 1];
-          helpers.sendFileToClient("tmp/" + room, fileNameToSend, msg.fileContents, room);
-        }
       });
-    })
+      directory = directory + '/' + dirFileArray[i];
+    }
+
+    // try to create the directory
+    fs.mkdir(directory, function(err) {
+      // if file should be deleted, delete it
+      if (msg.deleted) {
+        fs.stat("tmp/" + socket.request.user.username + "/" + msg.fileName, function(err, stats) {
+          if (!stats) {
+            return;
+          }
+          if (stats.isFile()) {
+            fs.unlink("tmp/" + socket.request.user.username + "/" + msg.fileName, function(err) {
+            });
+          } else {
+            helpers.rmdirRec("tmp/" + socket.request.user.username + "/" + msg.fileName, "");
+          }
+        });
+        // delete file from all listening sockets
+        var fileNameToSend = ""
+        for (var i = 1; i < dirFileArray.length - 1; i++) {
+          fileNameToSend = fileNameToSend + dirFileArray[i] + '/';
+        }
+        fileNameToSend += dirFileArray[dirFileArray.length - 1];
+        helpers.deleteFileFromClient("tmp/" + room, fileNameToSend, room);
+
+      // otherwise, save the file and send it to all listening sockets
+      } else {
+        fs.writeFile("tmp/" + socket.request.user.username + "/" + msg.fileName, msg.fileContents, function(err) {
+            if (err) {
+              console.log("file tmp/" + socket.request.user.username + "/" + msg.fileName + " could not be written due to:");
+              console.log(err);
+            } else {
+              console.log("The file tmp/" + socket.request.user.username + "/" + msg.fileName + " was saved!");
+            }
+        });
+
+        // send file to all listening sockets
+        var fileNameToSend = ""
+        for (var i = 1; i < dirFileArray.length - 1; i++) {
+          fileNameToSend = fileNameToSend + dirFileArray[i] + '/';
+        }
+        fileNameToSend += dirFileArray[dirFileArray.length - 1];
+        helpers.sendFileToClient("tmp/" + room, fileNameToSend, msg.fileContents, room);
+      }
+    });
+
 
   });
 }
