@@ -28,8 +28,7 @@ router.get('/', function(req, res, next) {
 
 router.get('/download', function(req, res) {
   var file =  __dirname + '/downloads/CodeMirror-darwin-x64/CodeMirror.zip'
-  res.download(file);
-  res.render('index', { user: req.user });
+  res.download(file, 'CodeMirror.zip');
 });
 
 router.get('/login', function(req, res) {
