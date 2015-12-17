@@ -26,9 +26,14 @@ var pass = function(passport) {
       mongoose.model('User').findOne({ 'username': username }, function(err, user) {
         if (err)
           return done(err);
-
-        if (user) {
+        if (user)
           return done(null, false, req.flash('signupMessage', 'That username is already taken.'));
+        var usernameRegex = /^[-\w\.\$@\*\!]{3,32}$/;
+        var passwordRegex = /^.{3,32}$/;
+        if (!usernameRegex.test(username))
+          return done(null, false, req.flash('signupMessage', 'Usernames must be 3 to 32 characters long and can only contain letters, numbers, ., -, _, $, @, *,  and !.'));
+        if (!passwordRegex.test(password)) {
+          return done(null, false, req.flash('signupMessage', 'Passwords mush be 3 to 32 characters long.'))
         } else {
           mongoose.model('User').create({
             username: username,
