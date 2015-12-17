@@ -8,6 +8,7 @@ var flash = require('connect-flash');
 var session = require('express-session');
 var io = require('../io');
 var onConnection = require('../socket-io/on-connection');
+var fs = require('fs');
 
 
 io.on('connection', onConnection);
@@ -63,6 +64,16 @@ router.post('/login', passport.authenticate('local-login', {
 router.get('/logout', function(req, res) {
   req.logout();
   res.redirect('/');
+});
+
+router.get('/:id', function(req, res) {
+  fs.readdir("tmp/" + req.params.id, function(err, folderNames) {
+    if (err) {
+      res.render("users/show_all_dir.ejs", { user: req.user, owner: req.params.id, folderNames: null });
+    } else {
+      res.render("users/show_all_dir.ejs", { user: req.user, owner: req.params.id, folderNames: folderNames });
+    }
+  });
 });
 
 router.get('/:id/:dir', function(req, res) {

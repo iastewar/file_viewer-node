@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <% include ../_head %>
+
+    <script src="/javascripts/show-all-dir.js"></script>
+
+  </head>
+  <body>
+    <div class="container">
+      <% include ../_navbar %>
+      <h1 class="page-header"><%= owner %>'s Repositories</h1>
+
+      <% if (folderNames) { %>
+        <% folderNames.forEach(function(folderName) { %>
+          <div class="well" data=<%= owner + "/" + folderName %>><%= folderName %></div>
+        <% }); %>
+      <% } else { %>
+        <div class="alert alert-danger" >This user has no repositories or does not exist</div>
+      <% } %>
+    </div>
+  </body>
+</html>

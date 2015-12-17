@@ -1,3 +1,15 @@
 body {
    font-family: 'Ubuntu', sans-serif !important;
 }
+
+.well {
+  cursor: pointer;
+}
+
+.well:hover {
+  background-color: #0c0d0e;
+}
+
+.well:active {
+  border: 1px solid black;
+}
