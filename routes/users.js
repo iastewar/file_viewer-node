@@ -10,7 +10,6 @@ var io = require('../io');
 var onConnection = require('../socket-io/on-connection');
 var fs = require('fs');
 
-
 io.on('connection', onConnection);
 
 /* GET home page. */
