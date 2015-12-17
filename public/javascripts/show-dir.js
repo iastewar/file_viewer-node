@@ -166,7 +166,7 @@ var ab2str = function(buf) {
 }
 
 var sendDirectoryError = function(msg) {
-  $("#container").html("Problem retrieving directory " + msg + ". Either repository does not exist, or the server is experiencing problems").addClass("alert alert-danger");
+  $("#container").html("Problem retrieving directory " + msg + ". Either repository does not exist, or the server is experiencing problems").show();
   $("h1").html("Not Found!");
 }
 
