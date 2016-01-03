@@ -3,7 +3,8 @@ var bcrypt   = require('bcrypt-nodejs');
 
 var userSchema = new mongoose.Schema({
   username: {type: String, required: true},
-  password: {type: String, required: true}
+  password: {type: String, required: true},
+  totalNumberOfFiles: Number
   //posts: [{type: mongoose.Schema.Types.ObjectId, ref: 'Post'}],
   //comments: [{type: mongoose.Schema.Types.ObjectId, ref: 'Comment'}]
 });

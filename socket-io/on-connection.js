@@ -1,11 +1,15 @@
 var fs = require('fs');
 var helpers = require('./helpers');
 
+var maxFileSize = 5242880;
+var maxFilesAllowed = 500;
+
 var onConnection = function(socket) {
   socket.on('delete folder', function(msg) {
     if (socket.request.user.logged_in) {
       if (socket.directories && socket.directories[msg]) {
-        helpers.rmdirRec("tmp/" + socket.request.user.username + "/" + msg, "", function() {
+        helpers.rmdirRec("tmp/" + socket.request.user.username + "/" + msg, "", socket.request.user, function() {
+          socket.request.user.save();
           fs.rmdir("tmp/" + socket.request.user.username, function(err) {
 
           });
@@ -19,7 +23,8 @@ var onConnection = function(socket) {
       if (socket.directories) {
         for (var dir in socket.directories) {
           if (socket.directories.hasOwnProperty(dir)) {
-            helpers.rmdirRec("tmp/" + socket.request.user.username + "/" + dir, "", function() {
+            helpers.rmdirRec("tmp/" + socket.request.user.username + "/" + dir, "", socket.request.user, function() {
+              socket.request.user.save();
               fs.rmdir("tmp/" + socket.request.user.username, function(err) {
 
               });
@@ -51,70 +56,104 @@ var onConnection = function(socket) {
       return;
     }
 
-    // get directory of file to be saved
+    // get directory of file
     var dirFileArray = msg.fileName.split("/");
-
-    // remember the directory this socket created so it can be deleted on disconnect
-    if (!socket.directories) {
-      socket.directories = {};
-    }
-    socket.directories[dirFileArray[0]] = true;
-
     var room = socket.request.user.username + "/" + dirFileArray[0];
-    var directory = "tmp" + "/" + socket.request.user.username;
 
-    for (var i = 0; i < dirFileArray.length - 1; i++) {
-      fs.mkdir(directory, function(err) {
-
+    // if file should be deleted, delete it
+    if (msg.deleted) {
+      fs.stat("tmp/" + socket.request.user.username + "/" + msg.fileName, function(err, stats) {
+        if (!stats) {
+          return;
+        }
+        if (stats.isFile()) {
+          fs.unlink("tmp/" + socket.request.user.username + "/" + msg.fileName, function(err) {
+            if (err) {
+            } else {
+              socket.request.user.totalNumberOfFiles--;
+              socket.request.user.save();
+            }
+          });
+        } else {
+          helpers.rmdirRec("tmp/" + socket.request.user.username + "/" + msg.fileName, "", socket.request.user, function() {
+            socket.request.user.save();
+          });
+        }
       });
-      directory = directory + '/' + dirFileArray[i];
-    }
+      // delete file from all listening sockets
+      var fileNameToSend = ""
+      for (var i = 1; i < dirFileArray.length - 1; i++) {
+        fileNameToSend = fileNameToSend + dirFileArray[i] + '/';
+      }
+      fileNameToSend += dirFileArray[dirFileArray.length - 1];
+      helpers.deleteFileFromClient("tmp/" + room, fileNameToSend, room);
 
-    // try to create the directory
-    fs.mkdir(directory, function(err) {
-      // if file should be deleted, delete it
-      if (msg.deleted) {
-        fs.stat("tmp/" + socket.request.user.username + "/" + msg.fileName, function(err, stats) {
-          if (!stats) {
-            return;
-          }
-          if (stats.isFile()) {
-            fs.unlink("tmp/" + socket.request.user.username + "/" + msg.fileName, function(err) {
+    // otherwise try to save the file
+    } else {
+      if (socket.request.user.totalNumberOfFiles >= maxFilesAllowed) {
+        console.log("The file tmp/" + socket.request.user.username + "/" + msg.fileName + " could not be written since the user has reached the maximum file limit of " + maxFilesAllowed);
+        helpers.sendMaxFileLimit(maxFilesAllowed, socket.id);
+      } else {
+        // remember the directory this socket created so it can be deleted on disconnect
+        if (!socket.directories) {
+          socket.directories = {};
+        }
+        socket.directories[dirFileArray[0]] = true;
+
+        var directory = "tmp" + "/" + socket.request.user.username;
+
+        // try to create the directory followed by the file
+        var createDirectory = function(index) {
+          directory = directory + '/' + dirFileArray[index];
+          if (index >= dirFileArray.length - 2) {
+            fs.mkdir(directory, function(err) {
+              createFile();
             });
           } else {
-            helpers.rmdirRec("tmp/" + socket.request.user.username + "/" + msg.fileName, "");
+            fs.mkdir(directory, function(err) {
+              createDirectory(index+1);
+            });
           }
-        });
-        // delete file from all listening sockets
-        var fileNameToSend = ""
-        for (var i = 1; i < dirFileArray.length - 1; i++) {
-          fileNameToSend = fileNameToSend + dirFileArray[i] + '/';
         }
-        fileNameToSend += dirFileArray[dirFileArray.length - 1];
-        helpers.deleteFileFromClient("tmp/" + room, fileNameToSend, room);
 
-      // otherwise, save the file and send it to all listening sockets
-      } else {
-        fs.writeFile("tmp/" + socket.request.user.username + "/" + msg.fileName, msg.fileContents, function(err) {
-            if (err) {
-              console.log("file tmp/" + socket.request.user.username + "/" + msg.fileName + " could not be written due to:");
-              console.log(err);
-            } else {
-              console.log("The file tmp/" + socket.request.user.username + "/" + msg.fileName + " was saved!");
-            }
-        });
+        var createFile = function() {
+          if (msg.fileContents && msg.fileContents.length > maxFileSize) {
+            console.log("The file tmp/" + socket.request.user.username + "/" + msg.fileName + " could not be written since it exceeds the maximum file size of " + maxFileSize);
+          } else {
+            // see if file exists already. If it doesn't, increment total number of files
+            fs.stat("tmp/" + socket.request.user.username + "/" + msg.fileName, function(err, stats) {
+              var exists = true;
+              if (err) {
+                exists = false;
+              }
+              fs.writeFile("tmp/" + socket.request.user.username + "/" + msg.fileName, msg.fileContents, function(err) {
+                  if (err) {
+                    console.log("The file tmp/" + socket.request.user.username + "/" + msg.fileName + " could not be written due to:");
+                    console.log(err);
+                  } else {
+                    if (!exists)
+                      socket.request.user.totalNumberOfFiles++;
+                    socket.request.user.save();
+                    console.log("The file tmp/" + socket.request.user.username + "/" + msg.fileName + " was saved!");
+                  }
+              });
 
-        // send file to all listening sockets
-        var fileNameToSend = ""
-        for (var i = 1; i < dirFileArray.length - 1; i++) {
-          fileNameToSend = fileNameToSend + dirFileArray[i] + '/';
+              // send file to all listening sockets
+              var fileNameToSend = ""
+              for (var i = 1; i < dirFileArray.length - 1; i++) {
+                fileNameToSend = fileNameToSend + dirFileArray[i] + '/';
+              }
+              fileNameToSend += dirFileArray[dirFileArray.length - 1];
+              helpers.sendFileToClient("tmp/" + room, fileNameToSend, msg.fileContents, room);
+            });
+          }
         }
-        fileNameToSend += dirFileArray[dirFileArray.length - 1];
-        helpers.sendFileToClient("tmp/" + room, fileNameToSend, msg.fileContents, room);
+
+        fs.mkdir(directory, function(err) {
+          createDirectory(0);
+        });
       }
-    });
-
-
+    }
   });
 }
 

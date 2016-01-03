@@ -3,28 +3,32 @@ var io = require('../io');
 
 var helpers = {};
 
-helpers.rmdirRec = function(directoryName, subDirectories, callback) {
+helpers.rmdirRec = function(directoryName, subDirectories, user, callback) {
 	fs.readdir(directoryName + '/' + subDirectories, function(err, fileNames) {
 		if (err) {
 			if (callback)
 				callback();
 		} else {
+			if (fileNames.length === 0) {
+				if (callback)
+					callback();
+			}
 			var index = 0;
 			fileNames.forEach(function(fileName) {
-				fs.stat(directoryName + '/' + subDirectories + '/' + fileName, function(err, stats) {
+				var subDirs;
+				if (subDirectories === "") {
+					subDirs = fileName;
+				} else {
+					subDirs = subDirectories + '/' + fileName;
+				}
+
+				fs.stat(directoryName + '/' + subDirs, function(err, stats) {
 					if (err || !stats) {
-						fs.rmdir(directoryName + '/' + subDirectories + '/' + fileName, function(err) {
+						fs.rmdir(directoryName + '/' + subDirs, function(err) {
 						});
 					} else {
-						var subDirs;
-						if (subDirectories === "") {
-							subDirs = fileName;
-						} else {
-							subDirs = subDirectories + '/' + fileName;
-						}
-
 						if (stats.isDirectory()) {
-							helpers.rmdirRec(directoryName, subDirs, function() {
+							helpers.rmdirRec(directoryName, subDirs, user, function() {
 								index++;
 								if (index === fileNames.length) {
 									fs.rmdir(directoryName + '/' + subDirectories, function(err) {
@@ -33,9 +37,12 @@ helpers.rmdirRec = function(directoryName, subDirectories, callback) {
 									});
 								}
 							});
+							fs.rmdir(directoryName + '/' + subDirs, function(err) {
+							});
 						} else {
-							fs.unlink(directoryName + '/' + subDirectories + '/' + fileName, function(err) {
+							fs.unlink(directoryName + '/' + subDirs, function(err) {
 								index++;
+								user.totalNumberOfFiles--;
 		            if (index === fileNames.length) {
 		              fs.rmdir(directoryName + '/' + subDirectories, function(err) {
 										if (callback)
@@ -138,16 +145,9 @@ helpers.sendDirectory = function(directoryName, subDirectories, room, depthIsOne
 }
 
 helpers.sendDirectoryToSingleClient = function(socket, currentDir, callback) {
-  // join a solo room
-  //var room = 'individual room';
-  //socket.join(room);
-  //console.log("socket joined room " + room);
   var directoryName = "tmp/" + currentDir;
-  // send directory to client
-  helpers.sendDirectory(directoryName, "", socket.id, true, function(err) {
-    //socket.leave(room);
-    //console.log("socket left room " + room);
 
+  helpers.sendDirectory(directoryName, "", socket.id, true, function(err) {
     if (callback) {
       if (err) {
         callback(true);
@@ -156,6 +156,10 @@ helpers.sendDirectoryToSingleClient = function(socket, currentDir, callback) {
       }
     }
   });
+}
+
+helpers.sendMaxFileLimit = function(maxFilesAllowed, room) {
+	io.to(room).emit('max files allowed', maxFilesAllowed);
 }
 
 helpers.isAuthenticated = function(socket) {
