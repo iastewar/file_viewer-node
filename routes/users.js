@@ -25,9 +25,19 @@ router.get('/', function(req, res, next) {
 
 });
 
-router.get('/download', function(req, res) {
-  var file =  __dirname + '/downloads/CodeMirror-darwin-x64/CodeMirror.zip'
-  res.download(file, 'CodeMirror.zip');
+router.get('/download-darwin', function(req, res) {
+  var file =  __dirname + '/downloads/CodeMirror-darwin-x64.zip'
+  res.download(file);
+});
+
+router.get('/download-linux', function(req, res) {
+  var file =  __dirname + '/downloads/CodeMirror-linux-x64.zip'
+  res.download(file);
+});
+
+router.get('/download-win32', function(req, res) {
+  var file =  __dirname + '/downloads/CodeMirror-win32-x64.zip'
+  res.download(file);
 });
 
 router.get('/login', function(req, res) {
