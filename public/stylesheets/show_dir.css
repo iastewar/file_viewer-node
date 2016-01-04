@@ -7,3 +7,28 @@ code {
   background: #2e3338 !important;
   padding: 0 !important;
 }
+
+#fileView {
+  white-space: nowrap;
+}
+
+#fileTree {
+  vertical-align: top;
+  display: inline-block;
+  min-width: 10%;
+}
+
+#fileContents {
+  vertical-align: top;
+  display: inline-block;
+  min-width: 70%;
+  margin-left: 2%;
+}
+
+.backgroundDiv:hover {
+  background-color: #3a3f46 !important;
+}
+
+.backgroundDiv:active {
+  color: #aaaaaa;
+}
