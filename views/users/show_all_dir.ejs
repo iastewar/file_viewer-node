@@ -13,7 +13,7 @@
 
       <% if (folderNames) { %>
         <% folderNames.forEach(function(folderName) { %>
-          <div class="well" data=<%= owner + "/" + folderName %>><%= folderName %></div>
+          <div class="well" data=<%= owner + "/" + folderName.replace(/\s/g, "%20") %>><%= folderName %></div>
         <% }); %>
       <% } else { %>
         <div class="alert alert-danger" >This user has no repositories or does not exist</div>
