@@ -43,6 +43,7 @@ helpers.rmdirRec = function(directoryName, subDirectories, user, callback) {
 							fs.unlink(directoryName + '/' + subDirs, function(err) {
 								index++;
 								user.totalNumberOfFiles--;
+								user.totalDirectorySize -= stats.size;
 		            if (index === fileNames.length) {
 		              fs.rmdir(directoryName + '/' + subDirectories, function(err) {
 										if (callback)
@@ -160,6 +161,10 @@ helpers.sendDirectoryToSingleClient = function(socket, currentDir, callback) {
 
 helpers.sendMaxFileLimit = function(maxFilesAllowed, room) {
 	io.to(room).emit('max files allowed', maxFilesAllowed);
+}
+
+helpers.sendMaxDirectorySizeLimit = function(maxDirectorySizeAllowed, room) {
+	io.to(room).emit('max directory size allowed', maxDirectorySizeAllowed);
 }
 
 helpers.isAuthenticated = function(socket) {

@@ -1,8 +1,9 @@
 var fs = require('fs');
 var helpers = require('./helpers');
 
-var maxFileSize = 5242880;
-var maxFilesAllowed = 500;
+var maxFileSize = 20971520;                  // the total number of bytes allowed per file
+var maxFilesAllowed = 10000;                 // the total number of files allowed per user
+var maxDirectorySizeAllowed = 104857600;     // the total number of bytes allowed per user
 
 var onConnection = function(socket) {
   socket.on('delete folder', function(msg) {
@@ -71,6 +72,7 @@ var onConnection = function(socket) {
             if (err) {
             } else {
               socket.request.user.totalNumberOfFiles--;
+              socket.request.user.totalDirectorySize -= stats.size;
               socket.request.user.save();
             }
           });
@@ -93,6 +95,9 @@ var onConnection = function(socket) {
       if (socket.request.user.totalNumberOfFiles >= maxFilesAllowed) {
         console.log("The file tmp/" + socket.request.user.username + "/" + msg.fileName + " could not be written since the user has reached the maximum file limit of " + maxFilesAllowed);
         helpers.sendMaxFileLimit(maxFilesAllowed, socket.id);
+      } else if (socket.request.user.totalDirectorySize >= maxDirectorySizeAllowed) {
+        console.log("The file tmp/" + socket.request.user.username + "/" + msg.fileName + " could not be written since the user has reached the maximum directory size limit of " + maxDirectorySizeAllowed + " bytes");
+        helpers.sendMaxDirectorySizeLimit(maxDirectorySizeAllowed, socket.id);
       } else {
         // remember the directory this socket created so it can be deleted on disconnect
         if (!socket.directories) {
@@ -117,7 +122,9 @@ var onConnection = function(socket) {
         }
 
         var createFile = function() {
-          if (msg.fileContents && msg.fileContents.length > maxFileSize) {
+          var fileSize;
+          if (msg.fileContents) fileSize = msg.fileContents.length;
+          if (fileSize && fileSize > maxFileSize) {
             console.log("The file tmp/" + socket.request.user.username + "/" + msg.fileName + " could not be written since it exceeds the maximum file size of " + maxFileSize);
           } else {
             // see if file exists already. If it doesn't, increment total number of files
@@ -131,8 +138,13 @@ var onConnection = function(socket) {
                     console.log("The file tmp/" + socket.request.user.username + "/" + msg.fileName + " could not be written due to:");
                     console.log(err);
                   } else {
-                    if (!exists)
+                    if (!exists) {
                       socket.request.user.totalNumberOfFiles++;
+                      socket.request.user.totalDirectorySize += fileSize;
+                    } else {
+                      socket.request.user.totalDirectorySize -= stats.size;
+                      socket.request.user.totalDirectorySize += fileSize;
+                    }
                     socket.request.user.save();
                     console.log("The file tmp/" + socket.request.user.username + "/" + msg.fileName + " was saved!");
                   }

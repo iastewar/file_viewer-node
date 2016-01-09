@@ -38,9 +38,9 @@ var TreeNode = React.createClass({
 
     var style = {};
     if (this.props.node.fullName === this.props.selectedFile) {
-      style = {backgroundColor: "#454b54", cursor: "pointer", color: "white", border: "1px solid black", borderRadius: "3px"}
+      style = {padding: "1px 15px 1px 15px", backgroundColor: "#454b54", cursor: "default", color: "white", borderTop: "1px solid black", borderBottom: "1px solid black"}
     } else {
-      style = {cursor: "pointer", borderRadius: "3px"}
+      style = {padding: "1px 15px 1px 15px", cursor: "default"}
     }
 
     var node;
@@ -52,7 +52,7 @@ var TreeNode = React.createClass({
 
     var space = "";
     for (var i = 0; i < this.props.depth; i++) {
-      space += "\u2003 \u2003 \u2003 \u2002"
+      space += "\u2003 \u2002"
     }
 
     return (
@@ -112,22 +112,29 @@ var FileView = React.createClass({
     this.setState({fileContents: findContents(this.props.node, this.state.fullFileName)});
   },
   render: function() {
+
+    var lineNumbers = [];
+    if (this.state.fileContents) {
+      var lines = this.state.fileContents.split("\n");
+      var len = lines.length;
+      for (var i = 0; i < len; i++) {
+        lineNumbers.push(<div key={i} className="line-number">{i+1}</div>);
+      }
+    }
+
+
     return <div id="fileView">
-            <div id="fileTree"><TreeNode node={this.props.node} selectedFile={this.state.fullFileName} notifyParent={this.swapView} depth={0}/></div>
-            <div id="fileContents">
-              <div className="panel panel-default">
-                <div className="panel-heading">
-                  <h3 className="panel-title">{this.state.fileName}</h3>
-                </div>
-                <div className="panel-body">
-                  <pre><code>{this.state.fileContents}</code></pre>
-                </div>
+            <div id="fileTree">
+              <div id="fixed-fileTree">
+                <TreeNode node={this.props.node} selectedFile={this.state.fullFileName} notifyParent={this.swapView} depth={0}/>
               </div>
+            </div>
+            <div id="fileContents">
+              <pre><div className="lines">{lineNumbers}</div><code>{this.state.fileContents}</code></pre>
             </div>
           </div>
   }
-})
-
+});
 var fileTree = {};
 
 var addToFileTree = function(fileTree, fileNameArray, length, index, fileName, fileContents) {
@@ -177,8 +184,20 @@ var removeFromFileTree = function(fileTree, fileNameArray, length, index) {
   }
 }
 
-var ab2str = function(buf) {
-  return String.fromCharCode.apply(null, new Uint8Array(buf));
+var ab2str = function(buffer) {
+  var bufView = new Uint8Array(buffer);
+  var length = bufView.length;
+  var result = "";
+  for (var i = 0; i < length; i += 65535) {
+      var addition = 65535;
+      if (i + 65535 > length) {
+          addition = length - i;
+      }
+      result += String.fromCharCode.apply(null, bufView.subarray(i,i+addition));
+  }
+
+  return result;
+
 }
 
 var sendDirectoryError = function(msg) {

@@ -1,11 +1,32 @@
 pre {
-  background: #2e3338 !important;
+  background: #33383e !important;
   border: none !important;
   padding: 0 !important;
+  height: 100%;
+  overflow: visible;
 }
-code {
-  background: #2e3338 !important;
+
+pre code {
+  background: #33383e !important;
   padding: 0 !important;
+  white-space: pre;
+  word-break: normal;
+  word-wrap: normal;
+  height: 100%;
+  overflow-x: visible !important;
+}
+
+pre .lines {
+  float:left;
+  margin:0 1em 0 -1em;
+  border-right: 1px solid;
+  text-align:right;
+}
+
+pre .line-number {
+  display:block;
+  padding:0 .5em 0 1em;
+  color: #969896;
 }
 
 #fileView {
@@ -13,16 +34,38 @@ code {
 }
 
 #fileTree {
-  vertical-align: top;
-  display: inline-block;
-  min-width: 10%;
+  /*background-color: #2a2f33;*/
+  position: absolute;
+  overflow: auto;
+  min-width: 20%;
+  left: 10%;
+  top: 140px;
+  bottom: 0px;
+  padding-top: 15px;
+  padding-bottom: 15px;
+  border-top: 1px solid black;
+  border-bottom: 1px solid black;
+  border-left: 1px solid black;
+
+}
+
+#fixed-fileTree {
+  position: absolute;
+  min-width: 100%;
 }
 
 #fileContents {
-  vertical-align: top;
-  display: inline-block;
-  min-width: 70%;
-  margin-left: 2%;
+  background-color: #33383e;
+  position: absolute;
+  overflow-y: auto;
+  width: 60%;
+  left: 30%;
+  top: 140px;
+  bottom: 0px;
+  border: 1px solid black;
+  padding: 15px;
+  /*border-top-right-radius: 3px;
+  border-bottom-right-radius: 3px;*/
 }
 
 .backgroundDiv:hover {

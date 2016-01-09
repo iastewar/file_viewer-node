@@ -38,7 +38,8 @@ var pass = function(passport) {
           mongoose.model('User').create({
             username: username,
             password: password,
-            totalNumberOfFiles: 0
+            totalNumberOfFiles: 0,
+            totalDirectorySize: 0
           }, function(err, user) {
             if (err) {
               return done(null, false, req.flash('signupMessage', 'A field is blank.'));
