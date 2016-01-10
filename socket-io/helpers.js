@@ -159,6 +159,37 @@ helpers.sendDirectoryToSingleClient = function(socket, currentDir, callback) {
   });
 }
 
+helpers.sendUserDirectories = function(room, username, callback) {
+	fs.readdir("tmp/" + username, function(err, folderNames) {
+    if (err) {
+			io.to(room).emit('user folder empty', username);
+			callback();
+    } else {
+			index = 0;
+			length = folderNames.length;
+			folderNames.forEach(function(folderName) {
+				io.to(room).emit('user folder', {owner: username, name: folderName});
+				if (index === length - 1) {
+					callback();
+				}
+				index++;
+			});
+    }
+  });
+}
+
+helpers.sendUserDirectoryEmpty = function(username) {
+	io.to(username).emit('user folder empty', username);
+}
+
+helpers.sendUserDirectory = function(username, directoryName) {
+	io.to(username).emit('user folder', {owner: username, name: directoryName});
+}
+
+helpers.sendDeleteUserDirectory = function(username, directoryName) {
+	io.to(username).emit('delete user folder', {owner: username, name: directoryName});
+}
+
 helpers.sendMaxFileLimit = function(maxFilesAllowed, room) {
 	io.to(room).emit('max files allowed', maxFilesAllowed);
 }

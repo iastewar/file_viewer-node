@@ -9,10 +9,13 @@ var onConnection = function(socket) {
   socket.on('delete folder', function(msg) {
     if (socket.request.user.logged_in) {
       if (socket.directories && socket.directories[msg]) {
+        helpers.sendDeleteUserDirectory(socket.request.user.username, msg);
         helpers.rmdirRec("tmp/" + socket.request.user.username + "/" + msg, "", socket.request.user, function() {
           socket.request.user.save();
           fs.rmdir("tmp/" + socket.request.user.username, function(err) {
-
+            if (!err) {
+              helpers.sendUserDirectoryEmpty(socket.request.user.username);
+            }
           });
         });
       }
@@ -24,10 +27,13 @@ var onConnection = function(socket) {
       if (socket.directories) {
         for (var dir in socket.directories) {
           if (socket.directories.hasOwnProperty(dir)) {
+            helpers.sendDeleteUserDirectory(socket.request.user.username, dir);
             helpers.rmdirRec("tmp/" + socket.request.user.username + "/" + dir, "", socket.request.user, function() {
               socket.request.user.save();
               fs.rmdir("tmp/" + socket.request.user.username, function(err) {
-
+                if (!err) {
+                  helpers.sendUserDirectoryEmpty(socket.request.user.username);
+                }
               });
             });
           }
@@ -50,6 +56,13 @@ var onConnection = function(socket) {
   socket.on('disconnect folder', function(msg) {
     socket.leave(msg);
     console.log("socket left room " + msg);
+  });
+
+  socket.on('show user folders', function(msg) {
+    helpers.sendUserDirectories(socket.id, msg, function() {
+      socket.join(msg);
+      console.log("socket joined room " + msg);
+    });
   });
 
   socket.on('send file', function(msg) {
@@ -161,8 +174,13 @@ var onConnection = function(socket) {
           }
         }
 
-        fs.mkdir(directory, function(err) {
-          createDirectory(0);
+        fs.stat(directory + "/" + dirFileArray[0], function(err, stats) {
+          if (err) {
+            helpers.sendUserDirectory(socket.request.user.username, dirFileArray[0]);
+          }
+          fs.mkdir(directory, function(err) {
+            createDirectory(0);
+          });
         });
       }
     }

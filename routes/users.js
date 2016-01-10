@@ -81,17 +81,11 @@ router.get('/logout', function(req, res) {
 });
 
 router.get('/:id', function(req, res) {
-  fs.readdir("tmp/" + req.params.id, function(err, folderNames) {
-    if (err) {
-      res.render("users/show_all_dir.ejs", { user: req.user, owner: req.params.id, folderNames: null });
-    } else {
-      res.render("users/show_all_dir.ejs", { user: req.user, owner: req.params.id, folderNames: folderNames });
-    }
-  });
+  res.render("users/show_all_dir.ejs", { user: req.user, owner: req.params.id });
 });
 
 router.get('/:id/:dir', function(req, res) {
-  res.render('users/show_dir.ejs', {user: req.user, dirUser: req.params.id, dir: req.params.dir});
+  res.render('users/show_dir.ejs', { user: req.user, dirUser: req.params.id, dir: req.params.dir });
 });
 
 // route middleware to make sure user is logged in
