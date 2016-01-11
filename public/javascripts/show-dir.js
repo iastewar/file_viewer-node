@@ -52,7 +52,7 @@ var TreeNode = React.createClass({
 
     var space = "";
     for (var i = 0; i < this.props.depth; i++) {
-      space += "\u2003 \u2002"
+      space += "\u2003 \u2003 \u2003 \u2002"
     }
 
     return (

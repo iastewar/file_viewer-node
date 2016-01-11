@@ -1,0 +1,25 @@
+#container {
+  border-top: 1px solid black;
+  border-left: 1px solid black;
+  border-right: 1px solid black;
+  background-color: #272b30;
+  margin-right: 50%;
+}
+
+.user-folder {
+  cursor: pointer;
+  height: 50px;
+  border-bottom: 1px solid black;
+  padding: 13px;
+}
+
+.user-folder:hover {
+  background-color: #3a3f46;
+  border: 1px solid white;
+}
+
+.user-folder:active {
+  color: #aaaaaa;
+  background-color: "#454b54";
+  border: 1px solid #aaaaaa;
+}

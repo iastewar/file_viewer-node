@@ -65,6 +65,11 @@ var onConnection = function(socket) {
     });
   });
 
+  socket.on('disconnect user folders', function(msg) {
+    socket.leave(msg);
+    console.log("socket left room " + msg);
+  });
+
   socket.on('send file', function(msg) {
     if (!helpers.isAuthenticated(socket)) {
       return;
