@@ -3,7 +3,7 @@ var socket = io();
 
 $(function() {
   $("#container").on("click", ".user-folder", function() {
-    var repository = owner + "/" + $(this).html();
+    var repository = owner + "/" + $(this).text();
     window.location = "/" + repository;
   });
 });
@@ -14,7 +14,7 @@ socket.on('user folder', function(msg) {
   if ($("#error-message").length !== 0) {
     $("#error-message").remove();
   }
-  $("#container").append("<div class='user-folder'>" + msg.name + "</div>");
+  $("#container").append("<div class='user-folder'><span class='fa fa-folder' style='margin-right: 15px;'></span>" + msg.name + "</div>");
 });
 
 socket.on('delete user folder', function(msg) {
