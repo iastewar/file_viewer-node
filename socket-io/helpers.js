@@ -1,9 +1,13 @@
 var fs = require('fs');
 var io = require('../io');
+var mongoose = require('mongoose');
 
 var helpers = {};
 
-helpers.rmdirRec = function(directoryName, subDirectories, user, callback) {
+var updateCallback = function(err, numAffected) {
+}
+
+helpers.rmdirRec = function(directoryName, subDirectories, userid, userDirName, callback) {
 	fs.readdir(directoryName + '/' + subDirectories, function(err, fileNames) {
 		if (err) {
 			if (callback)
@@ -28,7 +32,7 @@ helpers.rmdirRec = function(directoryName, subDirectories, user, callback) {
 						});
 					} else {
 						if (stats.isDirectory()) {
-							helpers.rmdirRec(directoryName, subDirs, user, function() {
+							helpers.rmdirRec(directoryName, subDirs, userid, userDirName, function() {
 								index++;
 								if (index === fileNames.length) {
 									fs.rmdir(directoryName + '/' + subDirectories, function(err) {
@@ -42,8 +46,10 @@ helpers.rmdirRec = function(directoryName, subDirectories, user, callback) {
 						} else {
 							fs.unlink(directoryName + '/' + subDirs, function(err) {
 								index++;
-								user.totalNumberOfFiles--;
-								user.totalDirectorySize -= stats.size;
+								mongoose.model('User').update({_id: userid}, {$inc: {totalNumberOfFiles: -1, totalDirectorySize: -stats.size}}, null, updateCallback);
+								if (userDirName) {
+									mongoose.model('User').update({_id: userid, "directories.name": userDirName}, {$inc: {"directories.$.numberOfFiles": -1}}, null, updateCallback)
+								}
 		            if (index === fileNames.length) {
 		              fs.rmdir(directoryName + '/' + subDirectories, function(err) {
 										if (callback)
@@ -93,8 +99,16 @@ helpers.sendDirectory = function(directoryName, subDirectories, room, depthIsOne
 			if (depthIsOne) {
 				var arr = directoryName.split("/");
 				if (arr.length >= 3) {
-					var msg = arr[1] + "/" + arr[2];
-					io.to(room).emit('connected', msg);
+					mongoose.model('User').findOne({username: arr[1]}, {directories: {$elemMatch: {name: arr[2]}}}, function(err, user) {
+						if (err || !user) {
+							console.log("error: user " + arr[1] + " does not exist with directory " + arr[2]);
+						} else {
+							var msg = {};
+							msg.name = arr[1] + "/" + arr[2];
+							msg.numberOfFiles = user.directories[0].numberOfFiles;
+							io.to(room).emit('connected', msg);
+						}
+					});
 				}
 			}
       var index = 0;

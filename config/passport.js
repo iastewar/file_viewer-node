@@ -39,7 +39,8 @@ var pass = function(passport) {
             username: username,
             password: password,
             totalNumberOfFiles: 0,
-            totalDirectorySize: 0
+            totalDirectorySize: 0,
+            directories: []
           }, function(err, user) {
             if (err) {
               return done(null, false, req.flash('signupMessage', 'A field is blank.'));

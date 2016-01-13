@@ -1,5 +1,7 @@
 var socket = io();
 
+var filesRetrieved = 0;
+var totalNumberOfFiles;
 
 var TreeNode = React.createClass({
   getInitialState: function() {
@@ -207,6 +209,15 @@ var sendDirectoryError = function(msg) {
 
 socket.emit('connect folder', directoryName);
 
+socket.on('connected', function(msg) {
+  totalNumberOfFiles = msg.numberOfFiles;
+  $("#container").html(
+    "<div>Loading...</div>" +
+    "<div id='progress-bar'></div>"
+  );
+  $("#progress-bar").progressbar({max: totalNumberOfFiles})
+});
+
 socket.on('send file', function(msg){
   var fileNameArray = msg.fileName.split("/");
 
@@ -214,8 +225,13 @@ socket.on('send file', function(msg){
     removeFromFileTree(fileTree, fileNameArray, fileNameArray.length, 0);
   } else {
     addToFileTree(fileTree, fileNameArray, fileNameArray.length, 0, msg.fileName, ab2str(msg.fileContents));
-    ReactDOM.render(<FileView node={fileTree} />, document.getElementById('container'));
-   }
+    if (filesRetrieved >= totalNumberOfFiles - 1) {
+      ReactDOM.render(<FileView node={fileTree} />, document.getElementById('container'));
+    } else {
+      filesRetrieved++;
+      $("#progress-bar").progressbar("value", filesRetrieved);
+    }
+  }
 });
 
 socket.on('send directory error', sendDirectoryError);
