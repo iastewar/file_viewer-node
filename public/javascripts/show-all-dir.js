@@ -1,5 +1,6 @@
 var socket = io();
 
+var userFolders = {};
 
 $(function() {
   $("#container").on("click", ".user-folder", function() {
@@ -11,16 +12,24 @@ $(function() {
 socket.emit('show user folders', owner);
 
 socket.on('user folder', function(msg) {
+  console.log("folder " + msg.name)
   if ($("#error-message").length !== 0) {
     $("#error-message").remove();
   }
-  $("#container").append("<div class='user-folder'><span class='fa fa-folder' style='margin-right: 5px;'></span>" + msg.name + "</div>");
+  if (!userFolders[msg.name]) {
+    $("#container").append("<div class='user-folder'><span class='fa fa-folder' style='margin-right: 5px;'></span>" + msg.name + "</div>");
+    userFolders[msg.name] = true;
+  }
 });
 
 socket.on('delete user folder', function(msg) {
+  console.log("delete " + msg.name)
   $(".user-folder:contains('" + msg.name + "')").remove();
+  delete userFolders[msg.name];
 });
 
 socket.on('user folder empty', function(msg) {
+  console.log("empty")
   $("#container").html("<div id='error-message' class='alert alert-danger'>This user has no repositories or does not exist</div>");
+  userFolders = {};
 });

@@ -74,6 +74,7 @@ var onConnection = function(socket) {
     console.log("socket left room " + msg);
   });
 
+  // maybe split this up into send user folder and send file?
   socket.on('send file', function(msg) {
     if (!helpers.isAuthenticated(socket)) {
       return;
