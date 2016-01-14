@@ -12,7 +12,6 @@ $(function() {
 socket.emit('show user folders', owner);
 
 socket.on('user folder', function(msg) {
-  console.log("folder " + msg.name)
   if ($("#error-message").length !== 0) {
     $("#error-message").remove();
   }
@@ -23,13 +22,11 @@ socket.on('user folder', function(msg) {
 });
 
 socket.on('delete user folder', function(msg) {
-  console.log("delete " + msg.name)
   $(".user-folder:contains('" + msg.name + "')").remove();
   delete userFolders[msg.name];
 });
 
 socket.on('user folder empty', function(msg) {
-  console.log("empty")
   $("#container").html("<div id='error-message' class='alert alert-danger'>This user has no repositories or does not exist</div>");
   userFolders = {};
 });
