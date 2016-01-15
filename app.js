@@ -38,6 +38,8 @@ var sessionStore = new MongoStore({ mongooseConnection: db.connection });
 app.use(session({
     key: 'file.view-sid-key',
     secret: 'iamasecretsecretforfileview',
+    cookie: {maxAge: 604800000},
+    rolling: true,
     store: sessionStore
 }));
 app.use(passport.initialize());

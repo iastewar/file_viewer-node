@@ -10,6 +10,10 @@ var updateCallback = function(err, numAffected) {
 }
 
 var onConnection = function(socket) {
+  socket.on('is logged in', function() {
+    helpers.sendIsLoggedIn(socket);
+  });
+
   socket.on('delete folder', function(msg) {
     if (socket.request.user.logged_in) {
       if (socket.directories && socket.directories[msg]) {

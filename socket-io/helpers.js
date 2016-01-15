@@ -221,4 +221,12 @@ helpers.isAuthenticated = function(socket) {
 	}
 }
 
+helpers.sendIsLoggedIn = function(socket) {
+	if (helpers.isAuthenticated(socket)) {
+		io.to(socket.id).emit('is logged in', socket.request.user.username);
+	} else {
+		io.to(socket.id).emit('is logged in');
+	}
+}
+
 module.exports = helpers;
