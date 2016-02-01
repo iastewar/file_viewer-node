@@ -115,82 +115,84 @@ var onConnection = function(socket) {
 
       // otherwise try to save the file
       } else {
-        if (socket.request.user.totalNumberOfFiles >= maxFilesAllowed) {
-          console.log("The file tmp/" + socket.request.user.username + "/" + msg.fileName + " could not be written since the user has reached the maximum file limit of " + maxFilesAllowed);
-          helpers.sendMaxFileLimit(maxFilesAllowed, socket.id);
-        } else if (socket.request.user.totalDirectorySize >= maxDirectorySizeAllowed) {
-          console.log("The file tmp/" + socket.request.user.username + "/" + msg.fileName + " could not be written since the user has reached the maximum directory size limit of " + maxDirectorySizeAllowed + " bytes");
-          helpers.sendMaxDirectorySizeLimit(maxDirectorySizeAllowed, socket.id);
-        } else {
-          // remember the directory this socket created so it can be deleted on disconnect
-          if (!socket.directories) {
-            socket.directories = {};
-          }
-          socket.directories[dirFileArray[0]] = true;
-
-          var directory = "tmp" + "/" + socket.request.user.username;
-
-          // try to create the directory followed by the file
-          var createDirectory = function(index) {
-            directory = directory + '/' + dirFileArray[index];
-            if (index >= dirFileArray.length - 2) {
-              fs.mkdir(directory, function(err) {
-                createFile();
-              });
-            } else {
-              fs.mkdir(directory, function(err) {
-                createDirectory(index+1);
-              });
+        mongoose.model('User').findOne({_id: socket.request.user._id}, function(err, socketUser) {
+          if (socketUser.totalNumberOfFiles >= maxFilesAllowed) {
+            console.log("The file tmp/" + socket.request.user.username + "/" + msg.fileName + " could not be written since the user has reached the maximum file limit of " + maxFilesAllowed);
+            helpers.sendMaxFileLimit(maxFilesAllowed, socket.id);
+          } else if (socketUser.totalDirectorySize >= maxDirectorySizeAllowed) {
+            console.log("The file tmp/" + socket.request.user.username + "/" + msg.fileName + " could not be written since the user has reached the maximum directory size limit of " + maxDirectorySizeAllowed + " bytes");
+            helpers.sendMaxDirectorySizeLimit(maxDirectorySizeAllowed, socket.id);
+          } else {
+            // remember the directory this socket created so it can be deleted on disconnect
+            if (!socket.directories) {
+              socket.directories = {};
             }
-          }
+            socket.directories[dirFileArray[0]] = true;
 
-          var createFile = function() {
-            var fileSize;
-            if (msg.fileContents) fileSize = msg.fileContents.length;
-            if (fileSize && fileSize > maxFileSize) {
-              console.log("The file tmp/" + socket.request.user.username + "/" + msg.fileName + " could not be written since it exceeds the maximum file size of " + maxFileSize);
-            } else {
-              // see if file exists already. If it doesn't, increment total number of files
-              fs.stat("tmp/" + socket.request.user.username + "/" + msg.fileName, function(err, stats) {
-                var exists = true;
-                if (err) {
-                  exists = false;
-                }
-                fs.writeFile("tmp/" + socket.request.user.username + "/" + msg.fileName, msg.fileContents, function(err) {
-                    if (err) {
-                      console.log("The file tmp/" + socket.request.user.username + "/" + msg.fileName + " could not be written due to:");
-                      console.log(err);
-                    } else {
-                      if (!exists) {
-                        mongoose.model('User').update({_id: socket.request.user._id}, {$inc: {totalNumberOfFiles: 1, totalDirectorySize: fileSize}}, updateCallback);
-                        mongoose.model('User').update({_id: socket.request.user._id, "directories.name": dirFileArray[0]}, {$inc: {"directories.$.numberOfFiles": 1}}, updateCallback);
-                      } else {
-                        mongoose.model('User').update({_id: socket.request.user._id}, {$inc: {totalDirectorySize: (fileSize - stats.size)}}, updateCallback);
-                      }
-                      console.log("The file tmp/" + socket.request.user.username + "/" + msg.fileName + " was saved!");
-                    }
+            var directory = "tmp" + "/" + socket.request.user.username;
+
+            // try to create the directory followed by the file
+            var createDirectory = function(index) {
+              directory = directory + '/' + dirFileArray[index];
+              if (index >= dirFileArray.length - 2) {
+                fs.mkdir(directory, function(err) {
+                  createFile();
                 });
+              } else {
+                fs.mkdir(directory, function(err) {
+                  createDirectory(index+1);
+                });
+              }
+            }
 
-                // send file to all listening sockets
-                var fileNameToSend = ""
-                for (var i = 1; i < dirFileArray.length - 1; i++) {
-                  fileNameToSend = fileNameToSend + dirFileArray[i] + '/';
-                }
-                fileNameToSend += dirFileArray[dirFileArray.length - 1];
-                helpers.sendFileToClient("tmp/" + room, fileNameToSend, msg.fileContents, room);
+            var createFile = function() {
+              var fileSize;
+              if (msg.fileContents) fileSize = msg.fileContents.length;
+              if (fileSize && fileSize > maxFileSize) {
+                console.log("The file tmp/" + socket.request.user.username + "/" + msg.fileName + " could not be written since it exceeds the maximum file size of " + maxFileSize);
+              } else {
+                // see if file exists already. If it doesn't, increment total number of files
+                fs.stat("tmp/" + socket.request.user.username + "/" + msg.fileName, function(err, stats) {
+                  var exists = true;
+                  if (err) {
+                    exists = false;
+                  }
+                  fs.writeFile("tmp/" + socket.request.user.username + "/" + msg.fileName, msg.fileContents, function(err) {
+                      if (err) {
+                        console.log("The file tmp/" + socket.request.user.username + "/" + msg.fileName + " could not be written due to:");
+                        console.log(err);
+                      } else {
+                        if (!exists) {
+                          mongoose.model('User').update({_id: socket.request.user._id}, {$inc: {totalNumberOfFiles: 1, totalDirectorySize: fileSize}}, updateCallback);
+                          mongoose.model('User').update({_id: socket.request.user._id, "directories.name": dirFileArray[0]}, {$inc: {"directories.$.numberOfFiles": 1}}, updateCallback);
+                        } else {
+                          mongoose.model('User').update({_id: socket.request.user._id}, {$inc: {totalDirectorySize: (fileSize - stats.size)}}, updateCallback);
+                        }
+                        console.log("The file tmp/" + socket.request.user.username + "/" + msg.fileName + " was saved!");
+                      }
+                  });
+
+                  // send file to all listening sockets
+                  var fileNameToSend = ""
+                  for (var i = 1; i < dirFileArray.length - 1; i++) {
+                    fileNameToSend = fileNameToSend + dirFileArray[i] + '/';
+                  }
+                  fileNameToSend += dirFileArray[dirFileArray.length - 1];
+                  helpers.sendFileToClient("tmp/" + room, fileNameToSend, msg.fileContents, room);
+                });
+              }
+            }
+
+            fs.stat(directory + "/" + dirFileArray[0], function(err, stats) {
+              if (err) {
+                helpers.sendUserDirectory(socket.request.user.username, dirFileArray[0]);
+              }
+              fs.mkdir(directory, function(err) {
+                createDirectory(0);
               });
-            }
-          }
-
-          fs.stat(directory + "/" + dirFileArray[0], function(err, stats) {
-            if (err) {
-              helpers.sendUserDirectory(socket.request.user.username, dirFileArray[0]);
-            }
-            fs.mkdir(directory, function(err) {
-              createDirectory(0);
             });
-          });
-        }
+          }
+        });
       }
     }
     // add directory to user in mongo db if it doesn't exist

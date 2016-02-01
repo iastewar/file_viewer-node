@@ -121,15 +121,15 @@ helpers.sendDirectory = function(directoryName, subDirectories, room, depthIsOne
           } else {
             subDirs = subDirectories + '/' + fileName;
           }
-          if (stats.isFile() && stats.size > 16777216) {
-            console.log("Error, " + fileName + " is over 16MB and can't be sent");
-            index++;
-            if (index === fileNames.length) {
-              if (callback) {
-                callback(true);
-              }
-            }
-          } else if (stats.isDirectory()) {
+          // if (stats.isFile() && stats.size > 16777216) {
+          //   console.log("Error, " + fileName + " is over 16MB and can't be sent");
+          //   index++;
+          //   if (index === fileNames.length) {
+          //     if (callback) {
+          //       callback(true);
+          //     }
+          //   }
+          if (stats.isDirectory()) {
             helpers.sendDirectory(directoryName, subDirs, room, false, function() {
 							index++;
 	            if (index === fileNames.length) {
