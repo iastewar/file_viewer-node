@@ -21,6 +21,7 @@ var onConnection = function(socket) {
           fs.rmdir("tmp/" + socket.request.user.username, function(err) {
             if (!err) {
               helpers.sendUserDirectoryEmpty(socket.request.user.username);
+              mongoose.model('User').update({_id: socket.request.user._id}, {$set: {totalDirectorySize: 0, totalNumberOfFiles: 0, directories: []}}, updateCallback);
             }
           });
         });
@@ -39,6 +40,7 @@ var onConnection = function(socket) {
               fs.rmdir("tmp/" + socket.request.user.username, function(err) {
                 if (!err) {
                   helpers.sendUserDirectoryEmpty(socket.request.user.username);
+                  mongoose.model('User').update({_id: socket.request.user._id}, {$set: {totalDirectorySize: 0, totalNumberOfFiles: 0, directories: []}}, updateCallback);
                 }
               });
             });
@@ -76,10 +78,15 @@ var onConnection = function(socket) {
     console.log("socket left room " + msg);
   });
 
-  // maybe split this up into send user folder and send file?
   socket.on('send file', function(msg) {
     if (!helpers.isAuthenticated(socket)) {
       return;
+    }
+
+    msg = JSON.parse(msg);
+    if (msg.fileContents) {
+      msg.fileContents = new Uint8Array(msg.fileContents.data).buffer;
+      msg.fileContents = helpers.toBuffer(msg.fileContents)
     }
 
     // get directory of file
@@ -146,9 +153,9 @@ var onConnection = function(socket) {
             }
 
             var createFile = function() {
-              var fileSize;
+              var fileSize = 0;
               if (msg.fileContents) fileSize = msg.fileContents.length;
-              if (fileSize && fileSize > maxFileSize) {
+              if (fileSize > maxFileSize) {
                 console.log("The file tmp/" + socket.request.user.username + "/" + msg.fileName + " could not be written since it exceeds the maximum file size of " + maxFileSize);
               } else {
                 // see if file exists already. If it doesn't, increment total number of files

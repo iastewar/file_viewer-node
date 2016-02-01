@@ -7,6 +7,17 @@ var helpers = {};
 var updateCallback = function(err, numAffected) {
 }
 
+// converts an ArrayBuffer to a Buffer
+helpers.toBuffer = function(ab) {
+		if (!ab) return "";
+    var buffer = new Buffer(ab.byteLength);
+    var view = new Uint8Array(ab);
+    for (var i = 0; i < buffer.length; ++i) {
+        buffer[i] = view[i];
+    }
+    return buffer;
+}
+
 helpers.rmdirRec = function(directoryName, subDirectories, userid, userDirName, callback) {
 	fs.readdir(directoryName + '/' + subDirectories, function(err, fileNames) {
 		if (err) {
@@ -71,7 +82,7 @@ helpers.sendFileToClient = function(directoryName, fileName, data, room) {
   var dirArray = directoryName.split("/");
 	var owner = dirArray[1];
   var currentDir = dirArray[dirArray.length-1];
-  io.to(room).emit('send file', {owner: owner, fileName: currentDir + '/' + fileName, fileContents: data});
+  io.to(room).emit('send file', JSON.stringify({owner: owner, fileName: currentDir + '/' + fileName, fileContents: data}));
   console.log(room + ", " + currentDir + '/' + fileName);
 }
 

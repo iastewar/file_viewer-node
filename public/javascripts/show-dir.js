@@ -219,6 +219,8 @@ socket.on('connected', function(msg) {
 });
 
 socket.on('send file', function(msg){
+  msg = JSON.parse(msg);
+  if (msg.fileContents) msg.fileContents = new Uint8Array(msg.fileContents.data).buffer;
   var fileNameArray = msg.fileName.split("/");
 
   if (msg.deleted) {
