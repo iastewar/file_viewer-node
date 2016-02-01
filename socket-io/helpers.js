@@ -101,7 +101,7 @@ helpers.sendDirectory = function(directoryName, subDirectories, room, depthIsOne
 			var arr = directoryName.split("/");
 			if (arr.length >= 3) {
 				var msg = arr[1] + "/" + arr[2];
-				io.to(room).emit('send directory error', msg);
+				//io.to(room).emit('send directory error', msg);
 			}
       if (callback) {
         callback(true);
