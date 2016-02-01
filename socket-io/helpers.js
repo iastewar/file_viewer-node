@@ -221,11 +221,12 @@ helpers.isAuthenticated = function(socket) {
 	}
 }
 
+// check if user is logged in and send their username. Also send a message telling
+// the client to resend all directories (if any) since they will have been deleted
 helpers.sendIsLoggedIn = function(socket) {
 	if (helpers.isAuthenticated(socket)) {
 		io.to(socket.id).emit('is logged in', socket.request.user.username);
-	} else {
-		io.to(socket.id).emit('is logged in');
+		io.to(socket.id).emit('resend folders');
 	}
 }
 
