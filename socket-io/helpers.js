@@ -98,11 +98,11 @@ helpers.sendDirectory = function(directoryName, subDirectories, room, depthIsOne
   fs.readdir(directoryName + '/' + subDirectories, function(err, fileNames) {
     if (err) {
       // either the directory doesn't exist or we can't open this many files at once
-			var arr = directoryName.split("/");
-			if (arr.length >= 3) {
-				var msg = arr[1] + "/" + arr[2];
-				//io.to(room).emit('send directory error', msg);
-			}
+			// var arr = directoryName.split("/");
+			// if (arr.length >= 3) {
+			// 	var msg = arr[1] + "/" + arr[2];
+			// 	io.to(room).emit('send directory error', msg);
+			// }
       if (callback) {
         callback(true);
       }
@@ -116,8 +116,10 @@ helpers.sendDirectory = function(directoryName, subDirectories, room, depthIsOne
 						} else {
 							var msg = {};
 							msg.name = arr[1] + "/" + arr[2];
-							msg.numberOfFiles = user.directories[0].numberOfFiles;
-							io.to(room).emit('connected', msg);
+							if (user.directories[0]) {
+								msg.numberOfFiles = user.directories[0].numberOfFiles;
+								io.to(room).emit('connected', msg);
+							}
 						}
 					});
 				}
