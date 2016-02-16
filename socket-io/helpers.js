@@ -4,6 +4,8 @@ var mongoose = require('mongoose');
 
 var helpers = {};
 
+var clientVersion = 0.01;
+
 var updateCallback = function(err, numAffected) {
 }
 
@@ -236,11 +238,21 @@ helpers.isAuthenticated = function(socket) {
 
 // check if user is logged in and send their username. Also send a message telling
 // the client to resend all directories (if any) since they will have been deleted
-helpers.sendIsLoggedIn = function(socket) {
+helpers.sendInitialMessages = function(socket) {
 	if (helpers.isAuthenticated(socket)) {
 		io.to(socket.id).emit('is logged in', socket.request.user.username);
 		io.to(socket.id).emit('resend folders');
+		io.to(socket.id).emit('client version', clientVersion);
+		helpers.sendUserStats(socket);
 	}
+}
+
+helpers.sendUserStats = function(socket) {
+	mongoose.model('User').findOne({_id: socket.request.user._id}, function(err, user) {
+		if (!err && user) {
+			io.to(socket.id).emit('user stats', {totalNumberOfFiles: user.totalNumberOfFiles, totalDirectorySize: user.totalDirectorySize});
+		}
+	});
 }
 
 module.exports = helpers;

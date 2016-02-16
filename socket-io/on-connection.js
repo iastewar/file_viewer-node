@@ -6,11 +6,12 @@ var maxFileSize = 20971520;                  // the total number of bytes allowe
 var maxFilesAllowed = 10000;                 // the total number of files allowed per user
 var maxDirectorySizeAllowed = 104857600;     // the total number of bytes allowed per user
 
-var updateCallback = function(err, numAffected) {
-}
-
 var onConnection = function(socket) {
-  helpers.sendIsLoggedIn(socket);
+  var updateCallback = function(err, numAffected) {
+    helpers.sendUserStats(socket);
+  }
+
+  helpers.sendInitialMessages(socket);
 
   socket.on('delete folder', function(msg) {
     if (socket.request.user.logged_in) {
@@ -19,6 +20,7 @@ var onConnection = function(socket) {
         mongoose.model('User').update({_id: socket.request.user._id}, {$pull: {directories: {name: msg}}}, updateCallback);
         helpers.rmdirRec("tmp/" + socket.request.user.username + "/" + msg, "", socket.request.user._id, null, function() {
           fs.rmdir("tmp/" + socket.request.user.username, function(err) {
+            helpers.sendUserStats(socket);
             if (!err) {
               helpers.sendUserDirectoryEmpty(socket.request.user.username);
               mongoose.model('User').update({_id: socket.request.user._id}, {$set: {totalDirectorySize: 0, totalNumberOfFiles: 0, directories: []}}, updateCallback);
@@ -38,6 +40,7 @@ var onConnection = function(socket) {
             mongoose.model('User').update({_id: socket.request.user._id}, {$pull: {directories: {name: dir}}}, updateCallback);
             helpers.rmdirRec("tmp/" + socket.request.user.username + "/" + dir, "", socket.request.user._id, null, function() {
               fs.rmdir("tmp/" + socket.request.user.username, function(err) {
+                helpers.sendUserStats(socket);
                 if (!err) {
                   helpers.sendUserDirectoryEmpty(socket.request.user.username);
                   mongoose.model('User').update({_id: socket.request.user._id}, {$set: {totalDirectorySize: 0, totalNumberOfFiles: 0, directories: []}}, updateCallback);
@@ -154,7 +157,10 @@ var onConnection = function(socket) {
 
             var createFile = function() {
               var fileSize = 0;
-              if (msg.fileContents) fileSize = msg.fileContents.length;
+              if (!msg.fileContents) {
+                return;
+              }
+              fileSize = msg.fileContents.length;
               if (fileSize > maxFileSize) {
                 console.log("The file tmp/" + socket.request.user.username + "/" + msg.fileName + " could not be written since it exceeds the maximum file size of " + maxFileSize);
               } else {
