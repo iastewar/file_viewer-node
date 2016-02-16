@@ -91,7 +91,7 @@ helpers.deleteFileFromClient = function(directoryName, fileName, room) {
   var dirArray = directoryName.split("/");
 	var owner = dirArray[1];
   var currentDir = dirArray[dirArray.length - 1];
-  io.to(room).emit('send file', {owner: owner, fileName: currentDir + '/' + fileName, deleted: true});
+  io.to(room).emit('send file', JSON.stringify({owner: owner, fileName: currentDir + '/' + fileName, deleted: true}));
 }
 
 helpers.sendDirectory = function(directoryName, subDirectories, room, depthIsOne, callback) {
