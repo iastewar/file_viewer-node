@@ -1,10 +1,9 @@
 var fs = require('fs');
 var io = require('../io');
 var mongoose = require('mongoose');
+var clientVersion = require('../config/client-version')
 
 var helpers = {};
-
-var clientVersion = 0.01;
 
 var updateCallback = function(err, numAffected) {
 }
@@ -242,9 +241,9 @@ helpers.sendInitialMessages = function(socket) {
 	if (helpers.isAuthenticated(socket)) {
 		io.to(socket.id).emit('is logged in', socket.request.user.username);
 		io.to(socket.id).emit('resend folders');
-		io.to(socket.id).emit('client version', clientVersion);
 		helpers.sendUserStats(socket);
 	}
+	io.to(socket.id).emit('client version', clientVersion);
 }
 
 helpers.sendUserStats = function(socket) {

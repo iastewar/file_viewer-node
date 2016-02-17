@@ -9,6 +9,7 @@ var session = require('express-session');
 var io = require('../io');
 var onConnection = require('../socket-io/on-connection');
 var fs = require('fs');
+var clientVersion = require('../config/client-version')
 
 io.on('connection', onConnection);
 
@@ -16,7 +17,7 @@ io.on('connection', onConnection);
 router.get('/', function(req, res, next) {
     res.format({
       html: function() {
-        res.render('index', { user: req.user });
+        res.render('index', { user: req.user, clientVersion: clientVersion });
       },
       json: function() {
         res.json({user: req.user});
