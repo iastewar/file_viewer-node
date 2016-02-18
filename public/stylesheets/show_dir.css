@@ -1,3 +1,10 @@
+#directory-name-header {
+  text-align: center;
+  position: absolute;
+  width: 100%;
+  left: 0px;
+}
+
 pre {
   background: #33383e !important;
   border: none !important;
@@ -34,18 +41,17 @@ pre .line-number {
 }
 
 #fileTree {
-  /*background-color: #2a2f33;*/
+  background-color: #2a2f33;
   position: absolute;
   overflow: auto;
   min-width: 20%;
-  left: 10%;
+  left: 0%;
   top: 140px;
   bottom: 0px;
   padding-top: 15px;
   padding-bottom: 15px;
-  border-top: 1px solid black;
-  border-bottom: 1px solid black;
-  border-left: 1px solid black;
+  border: 1px solid black;
+  z-index: 1;
 
 }
 
@@ -59,10 +65,11 @@ pre .line-number {
   position: absolute;
   overflow-y: auto;
   width: 60%;
-  left: 30%;
+  left: 20%;
   top: 140px;
   bottom: 0px;
-  border: 1px solid black;
+  border-top: 1px solid black;
+  border-bottom: 1px solid black;
   padding: 15px;
   /*border-top-right-radius: 3px;
   border-bottom-right-radius: 3px;*/
@@ -74,4 +81,74 @@ pre .line-number {
 
 .backgroundDiv:active {
   color: #aaaaaa;
+}
+
+#history-chat-container {
+  background-color: #c8c8c8;
+  position: absolute;
+  left: 80%;
+  width: 20%;
+  top: 140px;
+  bottom: 0px;
+  border: 1px solid black;
+  color: black;
+}
+
+#loading-bar-container {
+  position: absolute;
+  left: 35%;
+  width: 30%;
+  top: 140px;
+}
+
+#history-chat-header {
+  text-align: center;
+  border-bottom: 1px solid #b3b3b3;
+}
+
+#history-chat-contents {
+  position: absolute;
+  top: 57px;
+  overflow-y: auto;
+  bottom: 0px;
+  width: 100%;
+}
+
+.history-message {
+  margin: 5px;
+  margin-bottom: 10px;
+  word-wrap: break-word;
+}
+
+.history-message-edit {
+  color: blue;
+  margin-right: 3px;
+}
+
+.history-message-addition {
+  color: green;
+  margin-right: 3px;
+}
+
+.history-message-deletion {
+  color: red;
+  margin-right: 3px;
+}
+
+.history-message-timestamp {
+  color: grey;
+}
+
+#hide-history {
+  font-size: 2.0em;
+  position: absolute;
+  top: 45px;
+  cursor: pointer;
+}
+
+#hide-fileTree {
+  font-size: 2.0em;
+  position: absolute;
+  top: 45px;
+  cursor: pointer;
 }

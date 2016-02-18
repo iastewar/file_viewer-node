@@ -15,9 +15,24 @@
   <body>
     <div class="container">
       <% include ../_navbar %>
-      <h1><%= dirUser %></h1>
 
-      <div id="container"></div>
+      <div id="directory-name-header" style="display: none;">
+        <h1><%= dirUser + "/" + dir %></h1>
+        <div id="hide-history" class="fa fa-caret-right" style="left: 80%; display: none;"></div>
+        <div id="hide-fileTree" class="fa fa-caret-left" style="right: 80%; display: none;"></div>
+      </div>
+
+      <div id="file-view-container"></div>
+
+      <div id="history-chat-container" style="display: none;">
+        <div id="history-chat-header">
+          <h3>History</h3>
+        </div>
+
+        <div id="history-chat-contents"></div>
+      </div>
+
+      <div id="loading-bar-container"></div>
 
       <script type='text/javascript'>
         var directoryName = "<%= dirUser + "/" + dir %>"
