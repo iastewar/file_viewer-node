@@ -7,6 +7,8 @@ var historyMessages = 0;
 var historySizeLimit = 50;
 var historyScrolledToBottom = true;
 
+var fileTree = {};
+
 var TreeNode = React.createClass({
   getInitialState: function() {
     return {visible: false, open: false};
@@ -157,8 +159,12 @@ var FileView = React.createClass({
         }
       }
     }
-
-    this.setState({fileContents: findContents(this.props.node, this.state.fullFileName)});
+    if (this.props.fullFileName) {
+      var fileNameArray = this.props.fullFileName.split("/");
+      this.swapView(fileNameArray[fileNameArray.length - 1], findContents(this.props.node, this.props.fullFileName), this.props.fullFileName);
+    } else {
+      this.setState({fileContents: findContents(this.props.node, this.state.fullFileName)});
+    }
   },
   render: function() {
 
@@ -184,7 +190,6 @@ var FileView = React.createClass({
           </div>
   }
 });
-var fileTree = {};
 
 // returns true if a new file is added, false if an existing file is changed, and null if nothing happens.
 var addToFileTree = function(fileTree, fileNameArray, length, index, fileName, fileContents) {
@@ -277,24 +282,24 @@ var addToHistory = function(fileName, addition, deletion) {
     $("#history-chat-contents").append(
       "<div class='history-message'>" +
         "<b class='history-message-addition'>New:</b>" +
-        "<div class='history-message-file'>" + fileName + "</div>" +
-        "<div class='history-message-timestamp'>" + currentTime + "</div>" +
+        "<a class='history-message-file'>" + fileName + "</a>" +
+        "<span class='history-message-timestamp'>" + currentTime + "</span>" +
       "</div>"
     )
   } else if (deletion) {
     $("#history-chat-contents").append(
       "<div class='history-message'>" +
         "<b class='history-message-deletion'>Delete:</b>" +
-        "<div class='history-message-file'>" + fileName + "</div>" +
-        "<div class='history-message-timestamp'>" + currentTime + "</div>" +
+        "<a class='history-message-file'>" + fileName + "</a>" +
+        "<span class='history-message-timestamp'>" + currentTime + "</span>" +
       "</div>"
     )
   } else {
     $("#history-chat-contents").append(
       "<div class='history-message'>" +
         "<b class='history-message-edit'>Edit:</b>" +
-        "<div class='history-message-file'>" + fileName + "</div>" +
-        "<div class='history-message-timestamp'>" + currentTime + "</div>" +
+        "<a class='history-message-file'>" + fileName + "</a>" +
+        "<span class='history-message-timestamp'>" + currentTime + "</span>" +
       "</div>"
     )
   }
@@ -302,6 +307,12 @@ var addToHistory = function(fileName, addition, deletion) {
 }
 
 $(function() {
+  $("#history-chat-container").on("click", ".history-message-file", function() {
+    // have to render twice so that user only has to click once (for some weird reason...)
+    ReactDOM.render(<FileView node={fileTree} fullFileName={$(this).html()} />, document.getElementById('file-view-container'));
+    ReactDOM.render(<FileView node={fileTree} fullFileName={$(this).html()} />, document.getElementById('file-view-container'));
+  });
+
   $("#hide-history").on("click", function() {
     if ($("#history-chat-container").css("display") === "none") {
       $("#history-chat-container").show("slide", {direction: "right"}, 50, function() {

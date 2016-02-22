@@ -84,14 +84,13 @@ pre .line-number {
 }
 
 #history-chat-container {
-  background-color: #c8c8c8;
+  background-color: #454c54;
   position: absolute;
   left: 80%;
   width: 20%;
   top: 140px;
   bottom: 0px;
   border: 1px solid black;
-  color: black;
 }
 
 #loading-bar-container {
@@ -103,12 +102,13 @@ pre .line-number {
 
 #history-chat-header {
   text-align: center;
-  border-bottom: 1px solid #b3b3b3;
+  border-bottom: 1px solid #777777;
+  padding: 15px
 }
 
 #history-chat-contents {
   position: absolute;
-  top: 57px;
+  top: 51px;
   overflow-y: auto;
   bottom: 0px;
   width: 100%;
@@ -121,22 +121,28 @@ pre .line-number {
 }
 
 .history-message-edit {
-  color: blue;
+  color: lightblue;
   margin-right: 3px;
 }
 
 .history-message-addition {
-  color: green;
+  color: lightgreen;
   margin-right: 3px;
 }
 
 .history-message-deletion {
-  color: red;
+  color: #ff6666;
   margin-right: 3px;
 }
 
+.history-message-file {
+  margin-left: 3px;
+  margin-right: 5px;
+  cursor: pointer;
+}
+
 .history-message-timestamp {
-  color: grey;
+  color: #c8c8c8;
 }
 
 #hide-history {
