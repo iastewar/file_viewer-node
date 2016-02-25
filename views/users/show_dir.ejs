@@ -6,9 +6,6 @@
     <link rel="stylesheet" href="/stylesheets/show_dir.css">
     <link rel="stylesheet" href="/dependencies/highlight/styles/tomorrow-night-bright.css">
 
-    <script src="/javascripts/react.js"></script>
-    <script src="/javascripts/react-dom.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.24/browser.min.js"></script>
     <script src="/dependencies/highlight/highlight.pack.js"></script>
 
   </head>
@@ -24,12 +21,12 @@
 
       <div id="file-view-container"></div>
 
-      <div id="history-chat-container" style="display: none;">
-        <div id="history-chat-header">
+      <div id="history-container" style="display: none;">
+        <div id="history-header">
           <div>History</div>
         </div>
 
-        <div id="history-chat-contents"></div>
+        <div id="history-contents"></div>
       </div>
 
       <div id="loading-bar-container"></div>
@@ -37,8 +34,10 @@
       <script type='text/javascript'>
         var directoryName = "<%= dirUser + "/" + dir %>"
       </script>
-      <script type='text/babel' src='/javascripts/show-dir.js'></script>
 
+      <!-- <script src="http://localhost:8080/webpack-dev-server.js"></script>
+      <script src="http://localhost:8080/built/bundle.js"></script> -->
+      <script src="/javascripts/built/bundle.js"></script>
 
     </div>
   </body>

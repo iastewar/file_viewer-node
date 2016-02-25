@@ -82,7 +82,7 @@ pre .line-number {
   color: #aaaaaa;
 }
 
-#history-chat-container {
+#history-container {
   background-color: #454c54;
   position: absolute;
   left: 80%;
@@ -99,13 +99,13 @@ pre .line-number {
   top: 140px;
 }
 
-#history-chat-header {
+#history-header {
   text-align: center;
   border-bottom: 1px solid #777777;
   padding: 15px
 }
 
-#history-chat-contents {
+#history-contents {
   position: absolute;
   top: 51px;
   overflow-y: auto;
