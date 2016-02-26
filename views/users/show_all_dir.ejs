@@ -8,9 +8,13 @@
   <body>
     <div class="container">
       <% include ../_navbar %>
-      <h1 class="page-header"><%= owner %>'s Repositories</h1>
+      <h1><%= owner %>'s Repositories</h1>
 
-      <div id="container"></div>
+      <div id="loading-spinner-container">
+        <i id="loading-spinner" class="fa fa-spinner fa-pulse"></i>
+      </div>
+      <div id="container" style="display: none;"></div>
+      <div id="error-message-container"></div>
 
       <script type='text/javascript'>
         var owner = "<%= owner %>"

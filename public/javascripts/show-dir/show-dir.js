@@ -7,6 +7,8 @@ var FileView = require('./file-view');
 
 var socket = io();
 
+var receivedDirectory = false;
+
 var filesRetrieved = 0;
 var totalNumberOfFiles;
 
@@ -80,8 +82,7 @@ var ab2str = function(buffer) {
 }
 
 var sendDirectoryError = function(msg) {
-  $("#loading-bar-container").html("Problem retrieving directory " + msg + ". Either repository does not exist, or the server is experiencing problems").addClass("alert alert-danger");
-  $("h1").html("Not Found!");
+  $("#loading-bar-container").html("Problem retrieving directory " + msg + ". The repository does not exist.").addClass("alert alert-danger");
 }
 
 function updateHistoryScroll(){
@@ -137,7 +138,7 @@ $(function() {
 
   $("#hide-history").on("click", function() {
     if ($("#history-container").css("display") === "none") {
-      $("#history-container").show("slide", {direction: "right"}, 50, function() {
+      $("#history-container").show("slide", {direction: "right"}, 1, function() {
         if ($("#fileTree").css("display") === "none") {
           $("#fileContents").css("width", "80%");
         } else {
@@ -149,7 +150,7 @@ $(function() {
       $(this).removeClass("fa-caret-left");
       $(this).addClass("fa-caret-right");
     } else {
-      $("#history-container").hide("slide", {direction: "right"}, 50);
+      $("#history-container").hide("slide", {direction: "right"}, 1);
 
       if ($("#fileTree").css("display") === "none") {
         $("#fileContents").css("width", "100%");
@@ -165,7 +166,7 @@ $(function() {
 
   $("#hide-fileTree").on("click", function() {
     if ($("#fileTree").css("display") === "none") {
-      $("#fileTree").show("slide", {direction: "left"}, 50, function() {
+      $("#fileTree").show("slide", {direction: "left"}, 1, function() {
         if ($("#history-container").css("display") === "none") {
           $("#fileContents").css("width", "80%");
         } else {
@@ -178,7 +179,7 @@ $(function() {
       $(this).removeClass("fa-caret-right");
       $(this).addClass("fa-caret-left");
     } else {
-      $("#fileTree").hide("slide", {direction: "left"}, 50);
+      $("#fileTree").hide("slide", {direction: "left"}, 1);
 
       if ($("#history-container").css("display") === "none") {
         $("#fileContents").css("width", "100%");
@@ -205,13 +206,21 @@ $(function() {
 
 socket.emit('connect folder', directoryName);
 
-socket.on('connected', function(msg) {
+socket.on('send folder', function(msg) {
   totalNumberOfFiles = msg.numberOfFiles;
   $("#loading-bar-container").html(
     "<div>Loading " + directoryName + "...</div>" +
     "<div id='progress-bar'></div>"
   );
   $("#progress-bar").progressbar({max: totalNumberOfFiles})
+});
+
+socket.on('sent folder', function(msg) {
+  receivedDirectory = true;
+  ReactDOM.render(<FileView node={fileTree} />, document.getElementById('file-view-container'));
+  $("#loading-bar-container").hide();
+  $("#history-container").show();
+  $("#directory-name-header").show();
 });
 
 socket.on('send file', function(msg){
@@ -231,13 +240,7 @@ socket.on('send file', function(msg){
     else if (changed === false) changed = true;
   }
 
-  if (changed && filesRetrieved === totalNumberOfFiles - 1) {
-    filesRetrieved++;
-    ReactDOM.render(<FileView node={fileTree} />, document.getElementById('file-view-container'));
-    $("#loading-bar-container").hide();
-    $("#history-container").show();
-    $("#directory-name-header").show();
-  } else if (changed && filesRetrieved > totalNumberOfFiles - 1) {
+  if (changed && receivedDirectory) {
     ReactDOM.render(<FileView node={fileTree} />, document.getElementById('file-view-container'));
     if (fileNameArray[fileNameArray.length - 1] !== ".DS_Store")
       addToHistory(msg.fileName, added, deleted);

@@ -48,3 +48,8 @@ body {
 ::-webkit-scrollbar-corner {
   background: transparent;
 }
+
+#loading-spinner {
+  font-size: 2.5em;
+  margin-top: 25px;
+}

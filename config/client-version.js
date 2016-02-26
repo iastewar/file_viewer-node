@@ -1,3 +1,3 @@
-var clientVersion = 0.03;
+var clientVersion = 0.04;
 
 module.exports = clientVersion;

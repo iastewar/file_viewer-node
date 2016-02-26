@@ -6,7 +6,7 @@ var userSchema = new mongoose.Schema({
   password: {type: String, required: true},
   totalNumberOfFiles: Number,
   totalDirectorySize: Number,
-  directories: [new mongoose.Schema({name: {type: String, index: {unique: true}}, numberOfFiles: Number})]
+  directories: [new mongoose.Schema({name: {type: String, index: {unique: true}}, numberOfFiles: Number, directorySize: Number})]
 });
 
 // generate hash

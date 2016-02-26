@@ -1,9 +1,19 @@
+h1 {
+  text-align: center;
+}
+
 #container {
+  margin-left: 20%;
+  margin-right: 20%;
   border-top: 1px solid black;
   border-left: 1px solid black;
   border-right: 1px solid black;
-  background-color: #272b30;
-  margin-right: 50%;
+  background-color: #33383e;
+}
+
+#error-message-container {
+  margin-left: 20%;
+  margin-right: 20%;
 }
 
 .user-folder {
@@ -22,4 +32,8 @@
   color: #aaaaaa;
   background-color: "#454b54";
   border: 1px solid #aaaaaa;
+}
+
+#loading-spinner-container {
+  text-align: center;
 }
