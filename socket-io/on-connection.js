@@ -91,7 +91,7 @@ var onConnection = function(socket) {
     // add directory to user in mongo db if it doesn't exist
     mongoose.model('User').findOne({_id: socket.request.user._id, "directories.name": msg}, function(err, user) {
       if (!user) {
-        mongoose.model('User').update({_id: socket.request.user._id}, {$push: {directories: {name: msg, numberOfFiles: 0, directorySize: 0}}}, function(err, numAffected) {
+        mongoose.model('User').update({_id: socket.request.user._id}, {$push: {directories: {name: msg, numberOfFiles: 0, directorySize: 0, ready: false}}}, function(err, numAffected) {
 
         });
       }
@@ -104,6 +104,9 @@ var onConnection = function(socket) {
     }
 
     // if directory exists, let users know it is ready for viewing and let sender know that directory has been uploaded successfully
+    mongoose.model('User').update({_id: socket.request.user._id, "directories.name": msg}, {$set: {"directories.$.ready": true}}, function(err, numAffected) {
+    });
+
     mongoose.model('User').findOne({_id: socket.request.user._id, "directories.name": msg}, function(err, user) {
       if (user) {
         helpers.sendUserDirectory(socket.request.user.username, msg);
@@ -112,6 +115,14 @@ var onConnection = function(socket) {
     });
 
   });
+
+  // socket.on('send subfolder', function(msg) {
+  //
+  // });
+  //
+  // socket.on('sent subfolder', function(msg) {
+  //
+  // });
 
   socket.on('send file', function(msg) {
     if (!helpers.isAuthenticated(socket)) {

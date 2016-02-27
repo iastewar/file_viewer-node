@@ -122,10 +122,10 @@ helpers.sendDirectory = function(directoryName, subDirectories, room, depthIsOne
   fs.readdir(directoryName + '/' + subDirectories, function(err, fileNames) {
     if (err) {
       // either the directory doesn't exist or we can't open this many files at once
-      if (callback) callback(true);
+      if (callback) callback(err);
     } else {
 			if (fileNames.length === 0) {
-        if (callback) callback (false);
+        if (callback) callback();
         return;
       }
 
@@ -134,7 +134,7 @@ helpers.sendDirectory = function(directoryName, subDirectories, room, depthIsOne
 			var incIndex = function() {
         index++;
         if (index === fileNames.length) {
-          if (callback) callback(false);
+          if (callback) callback();
         }
       }
 
@@ -172,9 +172,9 @@ helpers.sendDirectoryToSingleClient = function(socket, currentDir, callback) {
   helpers.sendDirectory(directoryName, "", socket.id, true, function(err) {
     if (callback) {
       if (err) {
-        callback(true);
+        callback(err);
       } else {
-        callback(false);
+        callback();
       }
     }
   });
@@ -187,8 +187,15 @@ helpers.sendUserDirectories = function(room, username, callback) {
 			if (directoriesLength === 0) {
 				io.to(room).emit('user folder empty', username);
 			}
+			var flag = false;
 			for (var i = 0; i < directoriesLength; i++) {
-				io.to(room).emit('user folder', {owner: username, name: user.directories[i].name});
+				if (user.directories[i] && user.directories[i].ready) {
+					io.to(room).emit('user folder', {owner: username, name: user.directories[i].name});
+					flag = true;
+				}
+			}
+			if (!flag) {
+				io.to(room).emit('user folder empty', username);
 			}
 		} else {
 			io.to(room).emit('user folder empty', username);
