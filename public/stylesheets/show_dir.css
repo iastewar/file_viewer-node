@@ -147,14 +147,24 @@ pre .line-number {
 
 #hide-history {
   font-size: 2.0em;
+  color: #5c6670;
   position: absolute;
   top: 45px;
   cursor: pointer;
 }
 
+#hide-history:hover {
+  color: #c8c8c8;
+}
+
 #hide-fileTree {
   font-size: 2.0em;
+  color: #5c6670;
   position: absolute;
   top: 45px;
   cursor: pointer;
+}
+
+#hide-fileTree:hover {
+  color: #c8c8c8;
 }
