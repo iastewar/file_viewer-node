@@ -7,11 +7,20 @@ var FileView = require('./file-view');
 
 var socket = io();
 
+// true if the directory wasn't ready the first time we tried to connect
+var tryingToConnect = false;
+
+// true after loading bar has completed and directory has been received
 var receivedDirectory = false;
 
+// for loading bar
 var filesRetrieved = 0;
 var totalNumberOfFiles;
 
+// for receiving files loading spinner
+var receivingFiles = false;
+
+// for history
 var historyMessages = 0;
 var historyScrolledToBottom = true;
 
@@ -223,6 +232,17 @@ socket.on('sent folder', function(msg) {
   $("#directory-name-header").show();
 });
 
+socket.on('send subfolder', function(msg) {
+  receivingFiles = true;
+  $("#receiving-files-spinner").show();
+});
+
+socket.on('sent subfolder', function(msg) {
+  receivingFiles = false;
+  $("#receiving-files-spinner").hide();
+  ReactDOM.render(<FileView node={fileTree} />, document.getElementById('file-view-container'));
+});
+
 socket.on('send file', function(msg){
   msg = JSON.parse(msg);
   if (msg.fileContents) msg.fileContents = new Uint8Array(msg.fileContents.data).buffer;
@@ -240,16 +260,33 @@ socket.on('send file', function(msg){
     else if (changed === false) changed = true;
   }
 
-  if (changed && receivedDirectory) {
+  if (changed && receivedDirectory && !receivingFiles) {
     ReactDOM.render(<FileView node={fileTree} />, document.getElementById('file-view-container'));
     if (fileNameArray[fileNameArray.length - 1] !== ".DS_Store")
       addToHistory(msg.fileName, added, deleted);
-  } else {
+  } else if (!receivingFiles) {
     filesRetrieved++;
     $("#progress-bar").progressbar("value", filesRetrieved);
+  } else {
+    if (fileNameArray[fileNameArray.length - 1] !== ".DS_Store")
+      addToHistory(msg.fileName, added, deleted);
   }
 });
 
-socket.on('send directory error', sendDirectoryError);
+// if not ready keep trying to connect ever second until it is ready
+socket.on('folder not ready', function() {
+  if (!tryingToConnect) {
+    $("#loading-bar-container").prepend(
+      "<div>Waiting for repository to be ready...</div>"
+    );
+  }
+  tryingToConnect = true;
+
+  setTimeout(function() {
+    socket.emit('connect folder', directoryName);
+  }, 1000);
+});
+
+socket.on('send folder error', sendDirectoryError);
 
 }

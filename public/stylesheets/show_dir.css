@@ -168,3 +168,9 @@ pre .line-number {
 #hide-fileTree:hover {
   color: #c8c8c8;
 }
+
+#receiving-files-spinner {
+  position: absolute;
+  left: 15px;
+  top: 120px;
+}

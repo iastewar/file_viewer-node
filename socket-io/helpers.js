@@ -84,7 +84,7 @@ helpers.sendFileToClient = function(directoryName, fileName, data, room) {
 	var owner = dirArray[1];
   var currentDir = dirArray[dirArray.length-1];
   io.to(room).emit('send file', JSON.stringify({owner: owner, fileName: currentDir + '/' + fileName, fileContents: data}));
-  console.log(room + ", " + currentDir + '/' + fileName);
+  // console.log(room + ", " + currentDir + '/' + fileName);
 }
 
 // deletes a file from the clients in a room where directoryName/fileName is the path of the file
@@ -95,30 +95,7 @@ helpers.deleteFileFromClient = function(directoryName, fileName, room) {
   io.to(room).emit('send file', JSON.stringify({owner: owner, fileName: currentDir + '/' + fileName, deleted: true}));
 }
 
-helpers.sendDirectory = function(directoryName, subDirectories, room, depthIsOne, callback) {
-	// if we are not in a recursive call, check if directory exists and send appropriate message to room
-	if (depthIsOne) {
-		var arr = directoryName.split("/");
-		if (arr.length >= 3) {
-			mongoose.model('User').findOne({username: arr[1]}, {directories: {$elemMatch: {name: arr[2]}}}, function(err, user) {
-				if (err || !user) {
-					console.log("error: user " + arr[1] + " does not exist with directory " + arr[2]);
-					io.to(room).emit('send directory error', arr[1] + "/" + arr[2]);
-				} else {
-					var msg = {};
-					msg.name = arr[1] + "/" + arr[2];
-					if (user.directories[0]) {
-						msg.numberOfFiles = user.directories[0].numberOfFiles;
-						msg.directorySize = user.directories[0].directorySize;
-						io.to(room).emit('send folder', msg);
-					} else {
-						io.to(room).emit('send directory error', msg.name);
-					}
-				}
-			});
-		}
-	}
-
+helpers.sendDirectory = function(directoryName, subDirectories, room, callback) {
   fs.readdir(directoryName + '/' + subDirectories, function(err, fileNames) {
     if (err) {
       // either the directory doesn't exist or we can't open this many files at once
@@ -149,7 +126,7 @@ helpers.sendDirectory = function(directoryName, subDirectories, room, depthIsOne
           }
 
           if (stats.isDirectory()) {
-            helpers.sendDirectory(directoryName, subDirs, room, false, function(err) {
+            helpers.sendDirectory(directoryName, subDirs, room, function(err) {
 							incIndex();
 						});
           } else if (stats.isFile()) {
@@ -168,16 +145,44 @@ helpers.sendDirectory = function(directoryName, subDirectories, room, depthIsOne
 
 helpers.sendDirectoryToSingleClient = function(socket, currentDir, callback) {
   var directoryName = "tmp/" + currentDir;
+	var room = socket.id;
 
-  helpers.sendDirectory(directoryName, "", socket.id, true, function(err) {
-    if (callback) {
-      if (err) {
-        callback(err);
-      } else {
-        callback();
-      }
-    }
-  });
+	// check if directory exists and send appropriate message to room
+	var arr = directoryName.split("/");
+	if (arr.length >= 3) {
+		mongoose.model('User').findOne({username: arr[1]}, {directories: {$elemMatch: {name: arr[2]}}}, function(err, user) {
+			if (err || !user) {
+				// console.log("user " + arr[1] + " does not exist with directory " + arr[2]);
+				io.to(room).emit('send folder error', arr[1] + "/" + arr[2]);
+				if (callback) callback("could not find a user with the specified directory");
+			} else {
+				var msg = {};
+				msg.name = arr[1] + "/" + arr[2];
+				if (user.directories[0] && user.directories[0].ready) {
+					msg.numberOfFiles = user.directories[0].numberOfFiles;
+					msg.directorySize = user.directories[0].directorySize;
+					io.to(room).emit('send folder', msg);
+
+					helpers.sendDirectory(directoryName, "", room, function(err) {
+				    if (callback) {
+				      if (err) {
+				        callback(err);
+				      } else {
+				        callback();
+				      }
+				    }
+				  });
+
+				} else if (user.directories[0]){
+					io.to(room).emit('folder not ready', msg.name);
+					if (callback) callback("directory not ready");
+				} else {
+					io.to(room).emit('send folder error', msg.name);
+					if (callback) callback("could not find a user with the specified directory");
+				}
+			}
+		});
+	}
 }
 
 helpers.sendUserDirectories = function(room, username, callback) {
@@ -187,15 +192,10 @@ helpers.sendUserDirectories = function(room, username, callback) {
 			if (directoriesLength === 0) {
 				io.to(room).emit('user folder empty', username);
 			}
-			var flag = false;
 			for (var i = 0; i < directoriesLength; i++) {
-				if (user.directories[i] && user.directories[i].ready) {
+				if (user.directories[i]) {
 					io.to(room).emit('user folder', {owner: username, name: user.directories[i].name});
-					flag = true;
 				}
-			}
-			if (!flag) {
-				io.to(room).emit('user folder empty', username);
 			}
 		} else {
 			io.to(room).emit('user folder empty', username);
@@ -269,6 +269,14 @@ helpers.sendDirectoryStats = function(socket, directoryName) {
 
 helpers.sendSentFolder = function(room, name) {
 	io.to(room).emit('sent folder', name);
+}
+
+helpers.sendSendSubfolder = function(username, directoryName) {
+	io.to(username + "/" + directoryName).emit('send subfolder', {owner: username, name: directoryName});
+}
+
+helpers.sendSentSubfolder = function(username, directoryName) {
+	io.to(username + "/" + directoryName).emit('sent subfolder', {owner: username, name: directoryName});
 }
 
 module.exports = helpers;

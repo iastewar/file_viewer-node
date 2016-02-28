@@ -16,6 +16,8 @@ var onConnection = function(socket) {
 
     if (socket.request.user.logged_in) {
       if (socket.directories && socket.directories[msg]) {
+        console.log("deleting directory: " + msg + ", from user: " + socket.request.user.username);
+
         helpers.sendDeleteUserDirectory(socket.request.user.username, msg);
         mongoose.model('User').update({_id: socket.request.user._id}, {$pull: {directories: {name: msg}}}, updateCallback);
         helpers.rmdirRec("tmp/" + socket.request.user.username + "/" + msg, "", socket.request.user._id, null, function() {
@@ -39,6 +41,8 @@ var onConnection = function(socket) {
       if (socket.directories) {
         for (var dir in socket.directories) {
           if (socket.directories.hasOwnProperty(dir)) {
+            console.log("deleting directory: " + dir + ", from user: " + socket.request.user.username);
+
             helpers.sendDeleteUserDirectory(socket.request.user.username, dir);
             mongoose.model('User').update({_id: socket.request.user._id}, {$pull: {directories: {name: dir}}}, updateCallback);
             helpers.rmdirRec("tmp/" + socket.request.user.username + "/" + dir, "", socket.request.user._id, null, function() {
@@ -62,7 +66,7 @@ var onConnection = function(socket) {
         helpers.sendSentFolder(socket.id, msg);
         console.log("socket joined room " + msg);
       } else {
-        console.log("problem sending directory to client");
+        console.log("problem sending directory " + msg + " to client");
       }
     });
   });
@@ -88,11 +92,11 @@ var onConnection = function(socket) {
     if (!helpers.isAuthenticated(socket)) {
       return;
     }
-    // add directory to user in mongo db if it doesn't exist
+    // add directory to user in mongo db if it doesn't exist, and let users know it is ready for viewing
     mongoose.model('User').findOne({_id: socket.request.user._id, "directories.name": msg}, function(err, user) {
       if (!user) {
-        mongoose.model('User').update({_id: socket.request.user._id}, {$push: {directories: {name: msg, numberOfFiles: 0, directorySize: 0, ready: false}}}, function(err, numAffected) {
-
+        mongoose.model('User').update({_id: socket.request.user._id}, {$push: {directories: {name: msg, numberOfFiles: 0, directorySize: 0, ready: false, subDirectoriesInProgress: 0}}}, function(err, numAffected) {
+          helpers.sendUserDirectory(socket.request.user.username, msg);
         });
       }
     });
@@ -103,26 +107,52 @@ var onConnection = function(socket) {
       return;
     }
 
-    // if directory exists, let users know it is ready for viewing and let sender know that directory has been uploaded successfully
+    // if directory exists, let sender know that directory has been uploaded successfully
     mongoose.model('User').update({_id: socket.request.user._id, "directories.name": msg}, {$set: {"directories.$.ready": true}}, function(err, numAffected) {
     });
 
     mongoose.model('User').findOne({_id: socket.request.user._id, "directories.name": msg}, function(err, user) {
       if (user) {
-        helpers.sendUserDirectory(socket.request.user.username, msg);
+        console.log("recieved directory: " + msg + ", from user: " + socket.request.user.username);
+
         helpers.sendDirectorySentSuccessfully(socket.id, msg);
       }
     });
 
   });
 
-  // socket.on('send subfolder', function(msg) {
-  //
-  // });
-  //
-  // socket.on('sent subfolder', function(msg) {
-  //
-  // });
+  socket.on('send subfolder', function(msg) {
+    if (!helpers.isAuthenticated(socket)) {
+      return;
+    }
+
+    helpers.sendSendSubfolder(socket.request.user.username, msg);
+
+    mongoose.model('User').update({_id: socket.request.user._id, "directories.name": msg}, {$inc: {"directories.$.subDirectoriesInProgress": 1}}, function(err, numAffected) {
+    });
+    mongoose.model('User').update({_id: socket.request.user._id, "directories.name": msg}, {$set: {"directories.$.ready": false}}, function(err, numAffected) {
+    });
+  });
+
+  socket.on('sent subfolder', function(msg) {
+    if (!helpers.isAuthenticated(socket)) {
+      return;
+    }
+
+    mongoose.model('User').findOne({_id: socket.request.user._id}, {directories: {$elemMatch: {name: msg}}}, function(err, user) {
+  		if (!err && user && user.directories[0]) {
+        user.directories[0].subDirectoriesInProgress--;
+        if (user.directories[0].subDirectoriesInProgress === 0) {
+          mongoose.model('User').update({_id: socket.request.user._id, "directories.name": msg}, {$set: {"directories.$.ready": true}}, function(err, numAffected) {
+            helpers.sendSentSubfolder(socket.request.user.username, msg);
+          });
+        }
+        mongoose.model('User').update({_id: socket.request.user._id, "directories.name": msg}, {$inc: {"directories.$.subDirectoriesInProgress": -1}}, function(err, numAffected) {
+        });
+        helpers.sendDirectorySentSuccessfully(socket.id, msg);
+  		}
+  	});
+  });
 
   socket.on('send file', function(msg) {
     if (!helpers.isAuthenticated(socket)) {
@@ -139,14 +169,18 @@ var onConnection = function(socket) {
     var dirFileArray = msg.fileName.split("/");
     var room = socket.request.user.username + "/" + dirFileArray[0];
 
-    var updateCallback = function(err, numAffected) {
+    var userUpdateCallback = function(err, numAffected) {
       helpers.sendUserStats(socket);
+    }
+
+    var userDirectoryUpdateCallback = function(err, numAffected) {
       helpers.sendDirectoryStats(socket, dirFileArray[0]);
     }
 
     var deleteOrSaveFile = function() {
       // if file should be deleted, delete it
       if (msg.deleted) {
+        // console.log("The file tmp/" + socket.request.user.username + "/" + msg.fileName + " was deleted!");
         fs.stat("tmp/" + socket.request.user.username + "/" + msg.fileName, function(err, stats) {
           if (!stats) {
             return;
@@ -155,8 +189,8 @@ var onConnection = function(socket) {
             fs.unlink("tmp/" + socket.request.user.username + "/" + msg.fileName, function(err) {
               if (err) {
               } else {
-                mongoose.model('User').update({_id: socket.request.user._id}, {$inc: {totalNumberOfFiles: -1, totalDirectorySize: -stats.size}}, updateCallback);
-                mongoose.model('User').update({_id: socket.request.user._id, "directories.name": dirFileArray[0]}, {$inc: {"directories.$.numberOfFiles": -1, "directories.$.directorySize": -stats.size}}, updateCallback);
+                mongoose.model('User').update({_id: socket.request.user._id}, {$inc: {totalNumberOfFiles: -1, totalDirectorySize: -stats.size}}, userUpdateCallback);
+                mongoose.model('User').update({_id: socket.request.user._id, "directories.name": dirFileArray[0]}, {$inc: {"directories.$.numberOfFiles": -1, "directories.$.directorySize": -stats.size}}, userDirectoryUpdateCallback);
               }
             });
           } else {
@@ -224,12 +258,13 @@ var onConnection = function(socket) {
                         console.log(err);
                       } else {
                         if (!exists) {
-                          mongoose.model('User').update({_id: socket.request.user._id}, {$inc: {totalNumberOfFiles: 1, totalDirectorySize: fileSize}}, updateCallback);
-                          mongoose.model('User').update({_id: socket.request.user._id, "directories.name": dirFileArray[0]}, {$inc: {"directories.$.numberOfFiles": 1, "directories.$.directorySize": fileSize}}, updateCallback);
+                          mongoose.model('User').update({_id: socket.request.user._id}, {$inc: {totalNumberOfFiles: 1, totalDirectorySize: fileSize}}, userUpdateCallback);
+                          mongoose.model('User').update({_id: socket.request.user._id, "directories.name": dirFileArray[0]}, {$inc: {"directories.$.numberOfFiles": 1, "directories.$.directorySize": fileSize}}, userDirectoryUpdateCallback);
                         } else {
-                          mongoose.model('User').update({_id: socket.request.user._id}, {$inc: {totalDirectorySize: (fileSize - stats.size)}}, updateCallback);
+                          mongoose.model('User').update({_id: socket.request.user._id}, {$inc: {totalDirectorySize: (fileSize - stats.size)}}, userUpdateCallback);
+                          mongoose.model('User').update({_id: socket.request.user._id, "directories.name": dirFileArray[0]}, {$inc: {"directories.$.directorySize": (fileSize - stats.size)}}, userDirectoryUpdateCallback);
                         }
-                        console.log("The file tmp/" + socket.request.user.username + "/" + msg.fileName + " was saved!");
+                        // console.log("The file tmp/" + socket.request.user.username + "/" + msg.fileName + " was saved!");
                       }
                   });
 
