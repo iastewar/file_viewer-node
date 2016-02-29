@@ -125,6 +125,7 @@ pre .line-number {
   position: absolute;
   top: 51px;
   overflow-y: auto;
+  overflow-x: hidden;
   bottom: 0px;
   width: 100%;
 }
