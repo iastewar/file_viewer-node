@@ -12,6 +12,7 @@ var incNumSockets = function(socketUser) {
   }
 }
 
+// callback has one parameter (loggedIn) that is true if the socketUser is logged in, false otherwise
 var decNumSockets = function(socketUser, callback) {
   if (socketUser.logged_in) {
     mongoose.model('User').update({_id: socketUser._id}, {$inc: {connectedSockets: -1}}, function(err, numAffected) {
