@@ -22,14 +22,24 @@ helpers.toBuffer = function(ab) {
 helpers.rmdirRec = function(directoryName, subDirectories, userid, userDirName, callback) {
 	fs.readdir(directoryName + '/' + subDirectories, function(err, fileNames) {
 		if (err) {
-			if (callback)
-				callback();
+			if (callback) callback();
 		} else {
 			if (fileNames.length === 0) {
-				if (callback)
-					callback();
+				fs.rmdir(directoryName + '/' + subDirectories, function(err) {
+					if (callback) callback();
+				});
 			}
 			var index = 0;
+
+			var incIndex = function() {
+				index++;
+				if (index === fileNames.length) {
+					fs.rmdir(directoryName + '/' + subDirectories, function(err) {
+						if (callback) callback();
+					});
+				}
+      }
+
 			fileNames.forEach(function(fileName) {
 				var subDirs;
 				if (subDirectories === "") {
@@ -45,29 +55,17 @@ helpers.rmdirRec = function(directoryName, subDirectories, userid, userDirName, 
 					} else {
 						if (stats.isDirectory()) {
 							helpers.rmdirRec(directoryName, subDirs, userid, userDirName, function() {
-								index++;
-								if (index === fileNames.length) {
-									fs.rmdir(directoryName + '/' + subDirectories, function(err) {
-										if (callback)
-											callback();
-									});
-								}
-							});
-							fs.rmdir(directoryName + '/' + subDirs, function(err) {
+								fs.rmdir(directoryName + '/' + subDirs, function(err) {
+								});
+								incIndex();
 							});
 						} else {
 							fs.unlink(directoryName + '/' + subDirs, function(err) {
-								index++;
 								mongoose.model('User').update({_id: userid}, {$inc: {totalNumberOfFiles: -1, totalDirectorySize: -stats.size}}, null, updateCallback);
 								if (userDirName) {
 									mongoose.model('User').update({_id: userid, "directories.name": userDirName}, {$inc: {"directories.$.numberOfFiles": -1, "directories.$.directorySize": -stats.size}}, null, updateCallback)
 								}
-		            if (index === fileNames.length) {
-		              fs.rmdir(directoryName + '/' + subDirectories, function(err) {
-										if (callback)
-											callback();
-									});
-		            }
+		            incIndex();
 							});
 						}
 					}

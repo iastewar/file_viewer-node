@@ -35,8 +35,9 @@ socket.on('delete user folder', function(msg) {
 socket.on('user folder empty', function(msg) {
   if ($("#loading-spinner").length !== 0) {
     $("#loading-spinner").remove();
-    $("#container").hide();
   }
+  $("#container").html("");
+  $("#container").hide();
   $("#error-message-container").html("<div id='error-message' class='alert alert-danger'>This user has no repositories or does not exist</div>");
   userFolders = {};
 });

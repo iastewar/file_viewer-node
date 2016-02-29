@@ -6,7 +6,25 @@ var maxFileSize = 20971520;                  // the total number of bytes allowe
 var maxFilesAllowed = 10000;                 // the total number of files allowed per user
 var maxDirectorySizeAllowed = 104857600;     // the total number of bytes allowed per user
 
+var incNumSockets = function(socketUser) {
+  if (socketUser.logged_in) {
+    mongoose.model('User').update({_id: socketUser._id}, {$inc: {connectedSockets: 1}}, function() {});
+  }
+}
+
+var decNumSockets = function(socketUser, callback) {
+  if (socketUser.logged_in) {
+    mongoose.model('User').update({_id: socketUser._id}, {$inc: {connectedSockets: -1}}, function(err, numAffected) {
+      if (callback) callback(true);
+    });
+  } else {
+    if (callback) callback(false);
+  }
+}
+
 var onConnection = function(socket) {
+  incNumSockets(socket.request.user);
+
   helpers.sendInitialMessages(socket);
 
   socket.on('delete folder', function(msg) {
@@ -14,12 +32,13 @@ var onConnection = function(socket) {
       helpers.sendUserStats(socket);
     }
 
+    // remove the directory if it was created by the socket
     if (socket.request.user.logged_in) {
       if (socket.directories && socket.directories[msg]) {
         console.log("deleting directory: " + msg + ", from user: " + socket.request.user.username);
 
         helpers.sendDeleteUserDirectory(socket.request.user.username, msg);
-        mongoose.model('User').update({_id: socket.request.user._id}, {$pull: {directories: {name: msg}}}, updateCallback);
+        mongoose.model('User').update({_id: socket.request.user._id}, {$pull: {directories: {name: msg}}}, function() {});
         helpers.rmdirRec("tmp/" + socket.request.user.username + "/" + msg, "", socket.request.user._id, null, function() {
           fs.rmdir("tmp/" + socket.request.user.username, function(err) {
             helpers.sendUserStats(socket);
@@ -37,26 +56,43 @@ var onConnection = function(socket) {
     var updateCallback = function(err, numAffected) {
     }
 
-    if (socket.request.user.logged_in) {
-      if (socket.directories) {
-        for (var dir in socket.directories) {
-          if (socket.directories.hasOwnProperty(dir)) {
-            console.log("deleting directory: " + dir + ", from user: " + socket.request.user.username);
-
-            helpers.sendDeleteUserDirectory(socket.request.user.username, dir);
-            mongoose.model('User').update({_id: socket.request.user._id}, {$pull: {directories: {name: dir}}}, updateCallback);
-            helpers.rmdirRec("tmp/" + socket.request.user.username + "/" + dir, "", socket.request.user._id, null, function() {
-              fs.rmdir("tmp/" + socket.request.user.username, function(err) {
-                if (!err) {
-                  helpers.sendUserDirectoryEmpty(socket.request.user.username);
-                  mongoose.model('User').update({_id: socket.request.user._id}, {$set: {totalDirectorySize: 0, totalNumberOfFiles: 0, directories: []}}, updateCallback);
-                }
+    decNumSockets(socket.request.user, function(loggedIn) {
+      if (loggedIn) {
+        mongoose.model('User').findOne({_id: socket.request.user._id}, function(err, user) {
+          if (!err && user) {
+            // This is just to be safe. Make sure that all directories for a user are deleted if the user is not connected
+            // via any sockets.
+            if (user.connectedSockets === 0) {
+              console.log("deleting user directory for: " + socket.request.user.username);
+              helpers.rmdirRec("tmp/" + socket.request.user.username, "", socket.request.user._id, null, function() {
+                helpers.sendUserDirectoryEmpty(socket.request.user.username);
+                mongoose.model('User').update({_id: socket.request.user._id}, {$set: {totalDirectorySize: 0, totalNumberOfFiles: 0, directories: []}}, updateCallback);
               });
-            });
+            } else {
+              // remove all directories that were created by the disconnected socket
+              if (socket.directories) {
+                for (var dir in socket.directories) {
+                  if (socket.directories.hasOwnProperty(dir)) {
+                    console.log("deleting directory: " + dir + ", from user: " + socket.request.user.username);
+
+                    helpers.sendDeleteUserDirectory(socket.request.user.username, dir);
+                    mongoose.model('User').update({_id: socket.request.user._id}, {$pull: {directories: {name: dir}}}, updateCallback);
+                    helpers.rmdirRec("tmp/" + socket.request.user.username + "/" + dir, "", socket.request.user._id, null, function() {
+                      fs.rmdir("tmp/" + socket.request.user.username, function(err) {
+                        if (!err) {
+                          helpers.sendUserDirectoryEmpty(socket.request.user.username);
+                          mongoose.model('User').update({_id: socket.request.user._id}, {$set: {totalDirectorySize: 0, totalNumberOfFiles: 0, directories: []}}, updateCallback);
+                        }
+                      });
+                    });
+                  }
+                }
+              }
+            }
           }
-        }
+        });
       }
-    }
+    });
   });
 
   socket.on('connect folder', function(msg) {

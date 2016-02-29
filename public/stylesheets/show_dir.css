@@ -14,24 +14,40 @@ pre {
 
 pre code {
   background: #33383e !important;
-  padding: 0 !important;
+  padding-top: 15px !important;
+  padding-bottom: 30px !important;
   white-space: pre;
   word-break: normal;
   word-wrap: normal;
-  height: 100%;
-  overflow-x: visible !important;
+
+  position: absolute;
+  overflow: auto;
+  left: 47px;
+  right: 1.312px;
+  top: 0px;
+  bottom: 0px;
 }
 
 pre .lines {
-  float:left;
-  margin:0 1em 0 -1em;
+  float: left;
+  margin: 0 1em 0 -1em;
   border-right: 1px solid;
-  text-align:right;
+  text-align: right;
+
+  padding-top: 15px;
+  padding-bottom: 30px;
+  position: absolute;
+  top: 0px;
+  left: 5px;
+  bottom: 0px;
+  width: 55px;
+  overflow: hidden;
+  word-wrap: normal;
 }
 
 pre .line-number {
-  display:block;
-  padding:0 .5em 0 1em;
+  display: block;
+  padding: 0 .5em 0 1em;
   color: #969896;
 }
 
@@ -62,7 +78,6 @@ pre .line-number {
 #fileContents {
   background-color: #33383e;
   position: absolute;
-  overflow-y: auto;
   width: 60%;
   left: 20%;
   top: 140px;

@@ -32,6 +32,11 @@ var FileView = React.createClass({
     this.setState({fileContents: fileContents});
     this.setState({fullFileName: fullFileName});
   },
+  syncScroll: function() {
+    var lines = document.getElementById("fileContentsLines");
+  	var text = document.getElementById("fileContentsCode");
+  	lines.scrollTop = text.scrollTop;
+  },
   componentWillReceiveProps: function(nextProps) {
     var findContents = function(node, fullFileName) {
       if (node.fullName === fullFileName) {
@@ -74,7 +79,7 @@ var FileView = React.createClass({
               </div>
             </div>
             <div id="fileContents">
-              <pre><div className="lines">{lineNumbers}</div><code className={this.state.fileName}>{this.state.fileContents}</code></pre>
+              <pre><div id="fileContentsLines" className="lines">{lineNumbers}</div><code id="fileContentsCode" className={this.state.fileName} onScroll={this.syncScroll}>{this.state.fileContents}</code></pre>
             </div>
           </div>
   }

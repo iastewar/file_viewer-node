@@ -38,6 +38,7 @@ var pass = function(passport) {
           mongoose.model('User').create({
             username: username,
             password: password,
+            connectedSockets: 0,
             totalNumberOfFiles: 0,
             totalDirectorySize: 0,
             directories: []
