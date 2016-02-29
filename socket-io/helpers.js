@@ -1,4 +1,4 @@
-var fs = require('fs');
+var fs = require('graceful-fs')
 var io = require('../io');
 var mongoose = require('mongoose');
 var clientVersion = require('../config/client-version')
@@ -56,8 +56,8 @@ helpers.rmdirRec = function(directoryName, subDirectories, userid, userDirName, 
 						if (stats.isDirectory()) {
 							helpers.rmdirRec(directoryName, subDirs, userid, userDirName, function() {
 								fs.rmdir(directoryName + '/' + subDirs, function(err) {
+									incIndex();
 								});
-								incIndex();
 							});
 						} else {
 							fs.unlink(directoryName + '/' + subDirs, function(err) {

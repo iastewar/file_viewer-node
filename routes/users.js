@@ -8,7 +8,7 @@ var flash = require('connect-flash');
 var session = require('express-session');
 var io = require('../io');
 var onConnection = require('../socket-io/on-connection');
-var fs = require('fs');
+var fs = require('graceful-fs')
 var clientVersion = require('../config/client-version')
 
 io.on('connection', onConnection);
