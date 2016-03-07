@@ -132,7 +132,7 @@ var onConnection = function(socket) {
     // add directory to user in mongo db if it doesn't exist, and let users know it is ready for viewing
     mongoose.model('User').findOne({_id: socket.request.user._id, "directories.name": msg}, function(err, user) {
       if (!user) {
-        mongoose.model('User').update({_id: socket.request.user._id}, {$push: {directories: {name: msg, numberOfFiles: 0, directorySize: 0, ready: false, subDirectoriesInProgress: 0}}}, function(err, numAffected) {
+        mongoose.model('User').update({_id: socket.request.user._id}, {$push: {directories: {name: msg, numberOfFiles: 0, directorySize: 0, ready: false, subDirectoriesInProgress: 1}}}, function(err, numAffected) {
           helpers.sendUserDirectory(socket.request.user.username, msg);
         });
       }
@@ -145,16 +145,20 @@ var onConnection = function(socket) {
     }
 
     // if directory exists, let sender know that directory has been uploaded successfully
-    mongoose.model('User').update({_id: socket.request.user._id, "directories.name": msg}, {$set: {"directories.$.ready": true}}, function(err, numAffected) {
-    });
-
-    mongoose.model('User').findOne({_id: socket.request.user._id, "directories.name": msg}, function(err, user) {
-      if (user) {
+    mongoose.model('User').findOne({_id: socket.request.user._id}, {directories: {$elemMatch: {name: msg}}}, function(err, user) {
+  		if (!err && user && user.directories[0]) {
         console.log("recieved directory: " + msg + ", from user: " + socket.request.user.username);
 
+        user.directories[0].subDirectoriesInProgress--;
+        if (user.directories[0].subDirectoriesInProgress === 0) {
+          mongoose.model('User').update({_id: socket.request.user._id, "directories.name": msg}, {$set: {"directories.$.ready": true}}, function(err, numAffected) {
+          });
+        }
+        mongoose.model('User').update({_id: socket.request.user._id, "directories.name": msg}, {$inc: {"directories.$.subDirectoriesInProgress": -1}}, function(err, numAffected) {
+        });
         helpers.sendDirectorySentSuccessfully(socket.id, msg);
-      }
-    });
+  		}
+  	});
 
   });
 
